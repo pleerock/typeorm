@@ -2,6 +2,7 @@ import {QueryRunner} from "../../query-runner/QueryRunner";
 import {ObjectLiteral} from "../../common/ObjectLiteral";
 import {TransactionAlreadyStartedError} from "../../error/TransactionAlreadyStartedError";
 import {TransactionNotStartedError} from "../../error/TransactionNotStartedError";
+import {NotImplementedError} from "../../error/NotImplementedError";
 import {TableColumn} from "../../schema-builder/table/TableColumn";
 import {Table} from "../../schema-builder/table/Table";
 import {TableForeignKey} from "../../schema-builder/table/TableForeignKey";
@@ -201,7 +202,7 @@ export class OracleQueryRunner extends BaseQueryRunner implements QueryRunner {
      * Returns all available database names including system databases.
      */
     async getDatabases(): Promise<string[]> {
-        return Promise.resolve([]);
+        throw new NotImplementedError();
     }
 
     /**
@@ -209,21 +210,21 @@ export class OracleQueryRunner extends BaseQueryRunner implements QueryRunner {
      * If database parameter specified, returns schemas of that database.
      */
     async getSchemas(database?: string): Promise<string[]> {
-        return Promise.resolve([]);
+        throw new NotImplementedError();
     }
 
     /**
      * Checks if database with the given name exist.
      */
     async hasDatabase(database: string): Promise<boolean> {
-        return Promise.resolve(false);
+        throw new NotImplementedError();
     }
 
     /**
      * Checks if schema with the given name exist.
      */
     async hasSchema(schema: string): Promise<boolean> {
-        return Promise.resolve(false);
+        throw new NotImplementedError();
     }
 
     /**
@@ -257,7 +258,7 @@ export class OracleQueryRunner extends BaseQueryRunner implements QueryRunner {
      * Drops database.
      */
     async dropDatabase(database: string, ifExist?: boolean): Promise<void> {
-        return Promise.resolve();
+        throw new NotImplementedError();
     }
 
     /**
@@ -1502,7 +1503,7 @@ export class OracleQueryRunner extends BaseQueryRunner implements QueryRunner {
             `REFERENCES "${foreignKey.referencedTableName}" (${referencedColumnNames})`;
         // Oracle does not support NO ACTION, but we set NO ACTION by default in EntityMetadata
         if (foreignKey.onDelete && foreignKey.onDelete !== "NO ACTION")
-            sql += ` ON DELETE ${foreignKey.onDelete}`;
+        sql += ` ON DELETE ${foreignKey.onDelete}`;
 
         return new Query(sql);
     }

@@ -1,7 +1,7 @@
-import { Driver } from "./Driver";
+import {Driver} from "./Driver";
 import { hash } from "../util/StringUtils";
 
-    /**
+/**
  * Common driver utility functions.
  */
 export class DriverUtils {
@@ -35,7 +35,7 @@ export class DriverUtils {
 
     /**
      * Builds column alias from given alias name and column name.
-     * 
+     *
      * If alias length is greater than the limit (if any) allowed by the current
      * driver, replaces it with a hashed string.
      *

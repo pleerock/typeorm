@@ -1,4 +1,4 @@
-import { EntitySchema } from "../entity-schema/EntitySchema";
+import {EntitySchema} from "../entity-schema/EntitySchema";
 
 /**
  * Arguments for EntityRepositoryMetadata class, helps to construct an EntityRepositoryMetadata object.

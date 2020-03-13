@@ -395,7 +395,7 @@ export abstract class AbstractSqliteDriver implements Driver {
     /**
      * Creates a database type from a given column metadata.
      */
-    normalizeType(column: { type?: ColumnType, length?: number | string, precision?: number|null, scale?: number }): string {
+    normalizeType(column: { type?: ColumnType, length?: number | string, precision?: number, scale?: number }): string {
         if (column.type === Number || column.type === "int") {
             return "integer";
 
@@ -553,7 +553,8 @@ export abstract class AbstractSqliteDriver implements Driver {
                 || tableColumn.precision !== columnMetadata.precision
                 || tableColumn.scale !== columnMetadata.scale
                 //  || tableColumn.comment !== columnMetadata.comment || // todo
-                || this.normalizeDefault(columnMetadata) !== tableColumn.default
+                || (this.normalizeDefault(columnMetadata) !== tableColumn.default
+                    && !(this.normalizeDefault(columnMetadata) === null && typeof tableColumn.default === "undefined"))
                 || tableColumn.isPrimary !== columnMetadata.isPrimary
                 || tableColumn.isNullable !== columnMetadata.isNullable
                 || tableColumn.isUnique !== this.normalizeIsUnique(columnMetadata)

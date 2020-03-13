@@ -17,10 +17,10 @@ export class Item {
     @JoinColumn({ name: "userId" })
     userData: User;
 
-    @Column({ type: "int"})
+    @Column()
     userId: number;
 
-    @Column({ type: "int" })
+    @Column()
     mid: number;
 
 }

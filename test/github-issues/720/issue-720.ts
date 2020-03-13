@@ -99,6 +99,8 @@ describe("github issues > #720 `.save()` not updating composite key with Postgre
             }
         });
         expect(foundTranslation).to.be.eql({
+            localeCode: "US",
+            messageId: "1",
             text: "Changed Text"
         });
     })));

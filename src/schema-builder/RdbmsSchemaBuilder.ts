@@ -1,5 +1,6 @@
 import {CockroachDriver} from "../driver/cockroachdb/CockroachDriver";
 import {PostgresConnectionOptions} from "../driver/postgres/PostgresConnectionOptions";
+import {SqliteDriver} from "../driver/sqlite/SqliteDriver";
 import {SapDriver} from "../driver/sap/SapDriver";
 import {SqlServerConnectionOptions} from "../driver/sqlserver/SqlServerConnectionOptions";
 import {Table} from "./table/Table";
@@ -66,6 +67,14 @@ export class RdbmsSchemaBuilder implements SchemaBuilder {
      */
     async build(): Promise<void> {
         this.queryRunner = this.connection.createQueryRunner("master");
+
+        // for sqlite we disable foreign keys constraint check,
+        // because otherwise its not possible to perfrom "re-create" table on schema changes used in sqlite
+        // we have to do it before START TRANSACTION because sqlite ignore PRAGMA foreign_keys in transactions
+        if (this.connection.driver instanceof SqliteDriver) {
+            await this.queryRunner.query("PRAGMA foreign_keys = OFF");
+        }
+
         // CockroachDB implements asynchronous schema sync operations which can not been executed in transaction.
         // E.g. if you try to DROP column and ADD it again in the same transaction, crdb throws error.
         if (!(this.connection.driver instanceof CockroachDriver))
@@ -86,6 +95,10 @@ export class RdbmsSchemaBuilder implements SchemaBuilder {
 
             if (!(this.connection.driver instanceof CockroachDriver))
                 await this.queryRunner.commitTransaction();
+
+            if (this.connection.driver instanceof SqliteDriver) {
+                await this.queryRunner.query("PRAGMA foreign_keys = ON");
+            }
 
         } catch (error) {
 

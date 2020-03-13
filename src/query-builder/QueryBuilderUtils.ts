@@ -14,7 +14,7 @@ export class QueryBuilderUtils {
             return false;
 
         // extra alias and its property relation
-        const [aliasName, propertyName] = str.split("."); // todo: what about relations in embedded?
+        const [aliasName, propertyName] = QueryBuilderUtils.extractAliasAndPropertyPath(str);
         if (!aliasName || !propertyName)
             return false;
 
@@ -27,6 +27,13 @@ export class QueryBuilderUtils {
             return false;
 
         return true;
+    }
+
+    static extractAliasAndPropertyPath(str: string): [string, string] {
+        const dotPos = str.indexOf(".");
+        const alias = str.substr(0, dotPos);
+        const propertyPath = str.substr(dotPos + 1);
+        return [alias, propertyPath];
     }
 
 }

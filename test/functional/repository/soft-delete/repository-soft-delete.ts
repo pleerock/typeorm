@@ -34,7 +34,7 @@ describe("repository > soft-delete", () => {
         await postRepository.softDelete({ id: 1, name: "post#1" });
 
         // load to check
-        const loadedPosts = await postRepository.find({ withDeleted: true });
+        const loadedPosts = await postRepository.find({ options: { withDeleted: true }});
 
         // assert
         loadedPosts.length.should.be.equal(2);
@@ -51,7 +51,7 @@ describe("repository > soft-delete", () => {
         // restore one
         await postRepository.restore({ id: 1, name: "post#1" });
         // load to check
-        const restoredPosts = await postRepository.find({ withDeleted: true });
+        const restoredPosts = await postRepository.find({ options: { withDeleted: true } });
 
         // assert
         restoredPosts.length.should.be.equal(2);

@@ -85,6 +85,14 @@ export class EntityMetadata {
     target: Function|string;
 
     /**
+     * If entity's metadata is bound to some specific instance (class or function),
+     * this property will contain it. It can be used to initiate new instances of that class or function.
+     * When entity is defined using entity schema without target,
+     * TypeORM will create a POJO, and this property will be undefined.
+     */
+    // instance: Function|string; // todo: implement later
+
+    /**
      * Gets the name of the target.
      */
     targetName: string;
@@ -517,19 +525,23 @@ export class EntityMetadata {
     /**
      * Creates a new entity.
      */
-    create(queryRunner?: QueryRunner): any {
+    create(queryRunner?: QueryRunner, pojo: boolean = false): any {
         // if target is set to a function (e.g. class) that can be created then create it
         let ret: any;
-        if (this.target instanceof Function) {
-            ret = new (<any> this.target)();
-            this.lazyRelations.forEach(relation => this.connection.relationLoader.enableLazyLoad(relation, ret, queryRunner));
-            return ret;
+        if (this.target instanceof Function && !pojo) {
+            ret = this.connection.entityFactory.createEntity(this.target, this);
+        } else {
+            // otherwise simply return a new empty object
+            ret = {};
         }
 
-        // otherwise simply return a new empty object
-        const newObject = {};
-        this.lazyRelations.forEach(relation => this.connection.relationLoader.enableLazyLoad(relation, newObject, queryRunner));
-        return newObject;
+        // add "typename" property
+        if (this.connection.options.typename) {
+            ret[this.connection.options.typename] = this.targetName;
+        }
+
+        this.lazyRelations.forEach(relation => this.connection.relationLoader.enableLazyLoad(relation, ret, queryRunner));
+        return ret;
     }
 
     /**
@@ -650,6 +662,14 @@ export class EntityMetadata {
             return relation.joinColumns[0];
 
         return undefined;
+    }
+
+    /**
+     * Finds column with a given property path.
+     * Does not search in relation unlike findColumnWithPropertyPath.
+     */
+    findColumnWithPropertyPathStrict(propertyPath: string): ColumnMetadata|undefined {
+        return this.columns.find(column => column.propertyPath === propertyPath);
     }
 
     /**

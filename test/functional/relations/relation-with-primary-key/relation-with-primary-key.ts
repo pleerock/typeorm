@@ -39,25 +39,24 @@ describe("relations > relation with primary key", () => {
 
             // now check
             const posts = await connection.manager.find(Post, {
-                join: {
-                    alias: "post",
-                    innerJoinAndSelect: {
-                        category: "post.category"
-                    }
-                },
+                relations: ["category"],
                 order: {
-                    category: "ASC"
+                    category: {
+                        id: "ASC"
+                    }
                 }
             });
 
             posts.should.be.eql([{
                 title: "Hello Post #1",
+                categoryId: 1,
                 category: {
                     id: 1,
                     name: "Category saved by cascades #1"
                 }
             }, {
                 title: "Hello Post #2",
+                categoryId: 2,
                 category: {
                     id: 2,
                     name: "Category saved by cascades #2"

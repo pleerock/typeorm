@@ -158,11 +158,11 @@ export class RelationJoinColumnBuilder {
                             zerofill: referencedColumn.zerofill,
                             unsigned: referencedColumn.unsigned,
                             comment: referencedColumn.comment,
-                            primary: relation.isPrimary,
                             nullable: relation.isNullable
                         }
                     }
                 });
+                relation.isNullable = relationalColumn.isNullable;
                 relation.entityMetadata.registerColumn(relationalColumn);
             }
             relationalColumn.referencedColumn = referencedColumn; // its important to set it here because we need to set referenced column for user defined join column

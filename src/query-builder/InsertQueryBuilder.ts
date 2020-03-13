@@ -1,8 +1,8 @@
 import {CockroachDriver} from "../driver/cockroachdb/CockroachDriver";
+import {ObserverExecutor} from "../observer/ObserverExecutor";
 import {SapDriver} from "../driver/sap/SapDriver";
 import {QueryBuilder} from "./QueryBuilder";
 import {ObjectLiteral} from "../common/ObjectLiteral";
-import {ObjectType} from "../common/ObjectType";
 import {QueryDeepPartialEntity} from "./QueryPartialEntity";
 import {SqlServerDriver} from "../driver/sqlserver/SqlServerDriver";
 import {PostgresDriver} from "../driver/postgres/PostgresDriver";
@@ -16,7 +16,7 @@ import {ReturningResultsEntityUpdator} from "./ReturningResultsEntityUpdator";
 import {AbstractSqliteDriver} from "../driver/sqlite-abstract/AbstractSqliteDriver";
 import {SqljsDriver} from "../driver/sqljs/SqljsDriver";
 import {BroadcasterResult} from "../subscriber/BroadcasterResult";
-import {EntitySchema} from "../entity-schema/EntitySchema";
+import {EntitySchema, EntityTarget} from "../";
 import {OracleDriver} from "../driver/oracle/OracleDriver";
 import {AuroraDataApiDriver} from "../driver/aurora-data-api/AuroraDataApiDriver";
 
@@ -115,8 +115,15 @@ export class InsertQueryBuilder<Entity> extends QueryBuilder<Entity> {
 
             // close transaction if we started it
             // console.time(".commit");
-            if (transactionStartedByUs) {
+            if (transactionStartedByUs)
                 await queryRunner.commitTransaction();
+
+            // second case is when operation is executed without transaction and at the same time
+            // nobody started transaction from the above
+            if (this.expressionMap.callObservers) {
+                if (transactionStartedByUs || (this.expressionMap.useTransaction === false && queryRunner.isTransactionActive === false)) {
+                    await new ObserverExecutor(this.connection.observers).execute();
+                }
             }
             // console.timeEnd(".commit");
 
@@ -153,8 +160,8 @@ export class InsertQueryBuilder<Entity> extends QueryBuilder<Entity> {
     /**
      * Specifies INTO which entity's table insertion will be executed.
      */
-    into<T>(entityTarget: ObjectType<T>|EntitySchema<T>|string, columns?: string[]): InsertQueryBuilder<T> {
-        entityTarget = entityTarget instanceof EntitySchema ? entityTarget.options.name : entityTarget;
+    into<T>(entityTarget: EntityTarget<any>, columns?: string[]): InsertQueryBuilder<T> {
+        entityTarget = entityTarget instanceof EntitySchema ? entityTarget.options.name!! : entityTarget;
         const mainAlias = this.createFromAlias(entityTarget);
         this.expressionMap.setMainAlias(mainAlias);
         this.expressionMap.insertColumns = columns || [];

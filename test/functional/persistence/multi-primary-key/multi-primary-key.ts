@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import {closeTestingConnections, createTestingConnections, reloadTestingDatabases} from "../../../utils/test-utils";
-import {Connection} from "../../../../src/connection/Connection";
+import {Connection} from "../../../../src";
 import {Post} from "./entity/Post";
 import {Category} from "./entity/Category";
 
@@ -39,12 +39,7 @@ describe("persistence > multi primary keys", () => {
 
             // now check
             const posts = await connection.manager.find(Post, {
-                join: {
-                    alias: "post",
-                    innerJoinAndSelect: {
-                        category: "post.category"
-                    }
-                },
+                relations: ["category"],
                 order: {
                     firstId: "ASC"
                 }

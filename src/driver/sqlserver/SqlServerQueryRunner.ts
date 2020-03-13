@@ -3,6 +3,7 @@ import {QueryFailedError} from "../../error/QueryFailedError";
 import {QueryRunnerAlreadyReleasedError} from "../../error/QueryRunnerAlreadyReleasedError";
 import {TransactionAlreadyStartedError} from "../../error/TransactionAlreadyStartedError";
 import {TransactionNotStartedError} from "../../error/TransactionNotStartedError";
+import {NotImplementedError} from "../../error/NotImplementedError";
 import {ColumnType, PromiseUtils} from "../../index";
 import {ReadStream} from "../../platform/PlatformTools";
 import {BaseQueryRunner} from "../../query-runner/BaseQueryRunner";
@@ -71,7 +72,7 @@ export class SqlServerQueryRunner extends BaseQueryRunner implements QueryRunner
      * Returns obtained database connection.
      */
     connect(): Promise<void> {
-        return Promise.resolve();
+        throw new NotImplementedError();
     }
 
     /**

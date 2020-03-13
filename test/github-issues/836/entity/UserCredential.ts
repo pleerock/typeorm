@@ -3,12 +3,15 @@ import {Column} from "../../../../src/decorator/columns/Column";
 import {OneToOne} from "../../../../src/decorator/relations/OneToOne";
 import {JoinColumn} from "../../../../src/decorator/relations/JoinColumn";
 import {User} from "./User";
+import {PrimaryColumn} from "../../../../src/decorator/columns/PrimaryColumn";
 
 @Entity()
 export class UserCredential {
 
+    @PrimaryColumn()
+    id: number;
+
     @OneToOne(() => User, {
-        primary: true,
         cascade: true,
     })
     @JoinColumn({

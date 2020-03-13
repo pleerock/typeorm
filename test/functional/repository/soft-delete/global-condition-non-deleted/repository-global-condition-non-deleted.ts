@@ -61,7 +61,7 @@ describe(`repository > the global condtion of "non-deleted"`, () => {
         const loadedPosts = await connection
             .getRepository(Post)
             .find({
-                withDeleted: true,
+                options: { withDeleted: true }
             });
 
         loadedPosts!.length.should.be.equal(3);
@@ -81,7 +81,7 @@ describe(`repository > the global condtion of "non-deleted"`, () => {
         const loadedPost = await connection
             .getRepository(Post)
             .findOne(1, {
-                withDeleted: true,
+                options: { withDeleted: true }
             });
         expect(loadedPost).to.exist;
         expect(loadedPost!.title).to.equals("title#1");

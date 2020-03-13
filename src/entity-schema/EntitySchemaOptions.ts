@@ -7,6 +7,7 @@ import {TableType} from "../metadata/types/TableTypes";
 import {EntitySchemaUniqueOptions} from "./EntitySchemaUniqueOptions";
 import {EntitySchemaCheckOptions} from "./EntitySchemaCheckOptions";
 import {EntitySchemaExclusionOptions} from "./EntitySchemaExclusionOptions";
+import {TypedEntitySchemaProjection} from "../typed-entity-schema/options/TypedEntitySchemaProjection";
 
 /**
  * Interface for entity metadata mappings stored inside "schemas" instead of models decorated by decorators.
@@ -26,7 +27,7 @@ export class EntitySchemaOptions<T> {
     /**
      * Entity name.
      */
-    name: string;
+    name?: string;
 
     /**
      * Table name.
@@ -54,9 +55,14 @@ export class EntitySchemaOptions<T> {
     orderBy?: OrderByCondition;
 
     /**
+     * Columns and relations defined in a project of entity schema type.
+     */
+    projection?: TypedEntitySchemaProjection<T>;
+
+    /**
      * Entity column's options.
      */
-    columns: {
+    columns?: {
         [P in keyof T]?: EntitySchemaColumnOptions;
     };
 

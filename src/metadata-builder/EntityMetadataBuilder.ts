@@ -206,7 +206,7 @@ export class EntityMetadataBuilder {
         entityMetadatas
             .forEach(entityMetadata => {
                 entityMetadata.relationsWithJoinColumns = entityMetadata.relations.filter(relation => relation.isWithJoinColumn);
-                entityMetadata.hasNonNullableRelations = entityMetadata.relationsWithJoinColumns.some(relation => !relation.isNullable || relation.isPrimary);
+                entityMetadata.hasNonNullableRelations = entityMetadata.relationsWithJoinColumns.some(relation => !relation.isNullable);
             });
 
         // generate closure junction tables for all closure tables

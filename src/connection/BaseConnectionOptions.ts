@@ -3,6 +3,8 @@ import {LoggerOptions} from "../logger/LoggerOptions";
 import {NamingStrategyInterface} from "../naming-strategy/NamingStrategyInterface";
 import {DatabaseType} from "../driver/types/DatabaseType";
 import {Logger} from "../logger/Logger";
+import {EntityFactoryInterface} from "../entity-factory/EntityFactoryInterface";
+import {MappedEntitySchemaProperty} from "../typed-entity-schema/typed-entity-schema-types";
 import {Connection} from "./Connection";
 import {QueryResultCache} from "../cache/QueryResultCache";
 
@@ -27,21 +29,21 @@ export interface BaseConnectionOptions {
      * Accepts both entity classes and directories where from entities need to be loaded.
      * Directories support glob patterns.
      */
-    readonly entities?: ((Function|string|EntitySchema<any>))[];
+    readonly entities?: ((Function|string|EntitySchema<any>))[] | { [key: string]: Function|string|EntitySchema<any> };
 
     /**
      * Subscribers to be loaded for this connection.
      * Accepts both subscriber classes and directories where from subscribers need to be loaded.
      * Directories support glob patterns.
      */
-    readonly subscribers?: (Function|string)[];
+    readonly subscribers?: (Function|string)[] | { [key: string]: Function|string };
 
     /**
      * Migrations to be loaded for this connection.
      * Accepts both migration classes and directories where from migrations need to be loaded.
      * Directories support glob patterns.
      */
-    readonly migrations?: (Function|string)[];
+    readonly migrations?: (Function|string)[] | { [key: string]: Function|string };
 
     /**
      * Migrations table name, in case of different name from "migrations".
@@ -58,6 +60,17 @@ export interface BaseConnectionOptions {
      * Naming strategy to be used to name tables and columns in the database.
      */
     readonly namingStrategy?: NamingStrategyInterface;
+
+    /**
+     * Entity factory to be used for this connection.
+     * If this options is set, TypeOrm will use the provided factory to create instance of entities.
+     */
+    readonly entityFactory?: EntityFactoryInterface;
+
+    /**
+     * Used to map missing entity schema data.
+     */
+    readonly mappedEntitySchemaProperties?: MappedEntitySchemaProperty[];
 
     /**
      * Logging options.
@@ -174,5 +187,13 @@ export interface BaseConnectionOptions {
         readonly subscribersDir?: string;
 
     };
+
+    /**
+     * Optionally applied "typename" to the model.
+     * If set, then each hydrated model will have this property with the target model / entity name inside.
+     *
+     * (works like a discriminator property).
+     */
+    readonly typename?: string;
 
 }

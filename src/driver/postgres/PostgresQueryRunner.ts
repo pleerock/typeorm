@@ -4,6 +4,7 @@ import {QueryFailedError} from "../../error/QueryFailedError";
 import {QueryRunnerAlreadyReleasedError} from "../../error/QueryRunnerAlreadyReleasedError";
 import {TransactionAlreadyStartedError} from "../../error/TransactionAlreadyStartedError";
 import {TransactionNotStartedError} from "../../error/TransactionNotStartedError";
+import {NotImplementedError} from "../../error/NotImplementedError";
 import {ColumnType} from "../../index";
 import {ReadStream} from "../../platform/PlatformTools";
 import {BaseQueryRunner} from "../../query-runner/BaseQueryRunner";
@@ -222,7 +223,7 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
      * Returns all available database names including system databases.
      */
     async getDatabases(): Promise<string[]> {
-        return Promise.resolve([]);
+        throw new NotImplementedError();
     }
 
     /**
@@ -230,14 +231,14 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
      * If database parameter specified, returns schemas of that database.
      */
     async getSchemas(database?: string): Promise<string[]> {
-        return Promise.resolve([]);
+        throw new NotImplementedError();
     }
 
     /**
      * Checks if database with the given name exist.
      */
     async hasDatabase(database: string): Promise<boolean> {
-        return Promise.resolve(false);
+        throw new NotImplementedError();
     }
 
     /**
@@ -273,7 +274,7 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
      * Postgres does not supports database creation inside a transaction block.
      */
     async createDatabase(database: string, ifNotExist?: boolean): Promise<void> {
-        await Promise.resolve();
+        throw new NotImplementedError();
     }
 
     /**
@@ -281,7 +282,7 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
      * Postgres does not supports database drop inside a transaction block.
      */
     async dropDatabase(database: string, ifExist?: boolean): Promise<void> {
-        return Promise.resolve();
+        throw new NotImplementedError();
     }
 
     /**

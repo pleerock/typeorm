@@ -1,83 +1,85 @@
-import {closeTestingConnections, createTestingConnections, reloadTestingDatabases} from "../../utils/test-utils";
-import {Connection} from "../../../src/connection/Connection";
-import {EntitySchema, In} from "../../../src";
-import {Author, AuthorSchema} from "./entity/Author";
-import {Post, PostSchema} from "./entity/Post";
+import { closeTestingConnections, createTestingConnections, reloadTestingDatabases } from "../../utils/test-utils";
+import { Connection } from "../../../src/connection/Connection";
+import { EntitySchema, In } from "../../../src";
+import { Author, AuthorSchema } from "./entity/Author";
+import { Post, PostSchema } from "./entity/Post";
 
 describe("github issues > #4156 QueryExpressionMap doesn't clone all values correctly", () => {
-  let connections: Connection[];
-  before(
-    async () =>
-      (connections = await createTestingConnections({
-        entities: [new EntitySchema<Author>(AuthorSchema), new EntitySchema<Post>(PostSchema)],
-        dropSchema: true,
-        enabledDrivers: ["postgres"],
-      }))
-  );
-  beforeEach(() => reloadTestingDatabases(connections));
-  after(() => closeTestingConnections(connections));
+    let connections: Connection[];
+    before(
+        async () =>
+            (connections = await createTestingConnections({
+                entities: [new EntitySchema<Author>(AuthorSchema), new EntitySchema<Post>(PostSchema)],
+                dropSchema: true,
+                enabledDrivers: ["postgres"],
+            }))
+    );
+    beforeEach(() => reloadTestingDatabases(connections));
+    after(() => closeTestingConnections(connections));
 
-  async function prepareData(connection: Connection) {
-    const author = new Author();
-    author.id = 1;
-    author.name = "Jane Doe";
-    await connection.manager.save(author);
+    async function prepareData(connection: Connection) {
+        const author = new Author();
+        author.id = 1;
+        author.name = "Jane Doe";
+        await connection.manager.save(author);
 
-    const post = new Post();
-    post.id = 1;
-    post.title = "Post 1";
-    post.author = author;
-    await connection.manager.save(post);
-  }
+        const post = new Post();
+        post.id = 1;
+        post.title = "Post 1";
+        post.author = author;
+        await connection.manager.save(post);
+    }
 
-  it("should not error when the query builder has been cloned", () =>
-    Promise.all(
-      connections.map(async connection => {
-        await prepareData(connection);
+    it("should not error when the query builder has been cloned", () =>
+        Promise.all(
+            connections.map(async connection => {
+                await prepareData(connection);
 
-        const qb = connection.manager
-          .createQueryBuilder("Post", "post");
+                const qb = connection.manager
+                    .createQueryBuilder("Post", "post")
+                    .disableEagerRelations();
 
-        const [loadedPost1, loadedPost2] = await Promise.all([
-          qb.clone().where({ id: 1 }).getOne(),
-          qb.clone().where({ id: In([1]) }).getOne(),
-        ]);
+                const [loadedPost1, loadedPost2] = await Promise.all([
+                    qb.clone().where({ id: 1 }).getOne(),
+                    qb.clone().where({ id: In([1]) }).getOne(),
+                ]);
 
-        loadedPost1!.should.be.eql({
-          id: 1,
-          title: "Post 1"
-        });
+                (loadedPost1 as Post).should.be.eql({
+                    id: 1,
+                    title: "Post 1"
+                });
 
-        loadedPost2!.should.be.eql({
-          id: 1,
-          title: "Post 1"
-        });
-      })
-    ));
+                (loadedPost2 as Post).should.be.eql({
+                    id: 1,
+                    title: "Post 1"
+                });
+            })
+        ));
 
-  it("should not error when the query builder with where statement has been cloned", () =>
-    Promise.all(
-      connections.map(async connection => {
-        await prepareData(connection);
+    it("should not error when the query builder with where statement has been cloned", () =>
+        Promise.all(
+            connections.map(async connection => {
+                await prepareData(connection);
 
-        const qb = connection.manager
-          .createQueryBuilder("Post", "post")
-          .where({ id: 1 });
+                const qb = connection.manager
+                    .createQueryBuilder("Post", "post")
+                    .disableEagerRelations()
+                    .where({ id: 1 });
 
-        const [loadedPost1, loadedPost2] = await Promise.all([
-          qb.clone().getOne(),
-          qb.clone().getOne(),
-        ]);
+                const [loadedPost1, loadedPost2] = await Promise.all([
+                    qb.clone().getOne(),
+                    qb.clone().getOne(),
+                ]);
 
-        loadedPost1!.should.be.eql({
-          id: 1,
-          title: "Post 1"
-        });
+                (loadedPost1 as Post).should.be.eql({
+                    id: 1,
+                    title: "Post 1"
+                });
 
-        loadedPost2!.should.be.eql({
-          id: 1,
-          title: "Post 1"
-        });
-      })
-    ));
+                (loadedPost2 as Post).should.be.eql({
+                    id: 1,
+                    title: "Post 1"
+                });
+            })
+        ));
 });

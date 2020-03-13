@@ -32,7 +32,7 @@ describe("repository > find methods", () => {
             savedPosts.length.should.be.equal(100); // check if they all are saved
 
             // check count method
-            const count = await postRepository.count({ order: { id: "ASC" }});
+            const count = await postRepository.count();
             count.should.be.equal(100);
         })));
 
@@ -52,8 +52,7 @@ describe("repository > find methods", () => {
 
             // check count method
             const count = await postRepository.count({
-                where: { categoryName: "odd" },
-                order: { id: "ASC" }
+                categoryName: "odd"
             });
             count.should.be.equal(50);
         })));
@@ -75,8 +74,8 @@ describe("repository > find methods", () => {
 
             // check count method
             const count = await postRepository.count({
-                where: { categoryName: "odd", isNew: true },
-                order: { id: "ASC" }
+                categoryName: "odd",
+                isNew: true
             });
             count.should.be.equal(5);
         })));
@@ -118,10 +117,8 @@ describe("repository > find methods", () => {
 
             // check count method
             const count = await postRepository.count({
-                where: { categoryName: "even", isNew: true },
-                skip: 1,
-                take:  2,
-                order: { id: "ASC" }
+                categoryName: "even",
+                isNew: true
             });
             count.should.be.equal(5);
         })));

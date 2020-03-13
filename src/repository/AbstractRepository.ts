@@ -7,14 +7,14 @@ import {CustomRepositoryDoesNotHaveEntityError} from "../error/CustomRepositoryD
 import {getMetadataArgsStorage} from "../index";
 import {CustomRepositoryNotFoundError} from "../error/CustomRepositoryNotFoundError";
 import {SelectQueryBuilder} from "../query-builder/SelectQueryBuilder";
-import { EntitySchema } from "../entity-schema/EntitySchema";
+import {EntitySchema} from "../entity-schema/EntitySchema";
 
 /**
  * Provides abstract class for custom repositories that do not inherit from original orm Repository.
  * Contains all most-necessary methods to simplify code in the custom repository.
  * All methods are protected thus not exposed and it allows to create encapsulated custom repository.
  *
- * @experimental
+ * @deprecated
  */
 export class AbstractRepository<Entity extends ObjectLiteral> {
 

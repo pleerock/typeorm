@@ -1,4 +1,5 @@
 import {Driver} from "../driver/Driver";
+import {QueryObserver} from "../observer/QueryObserver";
 import {Repository} from "../repository/Repository";
 import {EntitySubscriberInterface} from "../subscriber/EntitySubscriberInterface";
 import {ObjectType} from "../common/ObjectType";
@@ -31,13 +32,15 @@ import {QueryResultCache} from "../cache/QueryResultCache";
 import {SqljsEntityManager} from "../entity-manager/SqljsEntityManager";
 import {RelationLoader} from "../query-builder/RelationLoader";
 import {RelationIdLoader} from "../query-builder/RelationIdLoader";
-import {EntitySchema} from "../";
+import {EntitySchema, PromiseUtils} from "../";
 import {SqlServerDriver} from "../driver/sqlserver/SqlServerDriver";
 import {MysqlDriver} from "../driver/mysql/MysqlDriver";
 import {ObjectUtils} from "../util/ObjectUtils";
-import {PromiseUtils} from "../";
 import {IsolationLevel} from "../driver/types/IsolationLevel";
 import {AuroraDataApiDriver} from "../driver/aurora-data-api/AuroraDataApiDriver";
+import {EntityFactoryInterface} from "../entity-factory/EntityFactoryInterface";
+import {DefaultEntityFactory} from "../entity-factory/DefaultEntityFactory";
+import {EntityTarget} from "../common/EntityTarget";
 
 /**
  * Connection is a single database ORM connection to a specific database.
@@ -68,7 +71,7 @@ export class Connection {
     /**
      * Database driver used by this connection.
      */
-    readonly driver: Driver;
+    driver: Driver;
 
     /**
      * EntityManager of this connection.
@@ -78,12 +81,12 @@ export class Connection {
     /**
      * Naming strategy used in the connection.
      */
-    readonly namingStrategy: NamingStrategyInterface;
+    namingStrategy: NamingStrategyInterface;
 
     /**
      * Logger used to log orm events.
      */
-    readonly logger: Logger;
+    logger: Logger;
 
     /**
      * Migration instances that are registered for this connection.
@@ -96,6 +99,16 @@ export class Connection {
     readonly subscribers: EntitySubscriberInterface<any>[] = [];
 
     /**
+     * Entity factory used to instantiate entities objects
+     */
+    entityFactory: EntityFactoryInterface;
+
+    /**
+     * Observers observing queries.
+     */
+    readonly observers: QueryObserver[] = [];
+
+    /**
      * All entity metadatas that are registered for this connection.
      */
     readonly entityMetadatas: EntityMetadata[] = [];
@@ -103,7 +116,7 @@ export class Connection {
     /**
      * Used to work with query result cache.
      */
-    readonly queryResultCache?: QueryResultCache;
+    queryResultCache?: QueryResultCache;
 
     /**
      * Used to load relations and work with lazy relations.
@@ -122,14 +135,11 @@ export class Connection {
     constructor(options: ConnectionOptions) {
         this.name = options.name || "default";
         this.options = options;
-        this.logger = new LoggerFactory().create(this.options.logger, this.options.logging);
-        this.driver = new DriverFactory().create(this);
-        this.manager = this.createEntityManager();
-        this.namingStrategy = options.namingStrategy || new DefaultNamingStrategy();
-        this.queryResultCache = options.cache ? new QueryResultCacheFactory(this).create() : undefined;
         this.relationLoader = new RelationLoader(this);
         this.relationIdLoader = new RelationIdLoader(this);
         this.isConnected = false;
+        this.setOptions(options);
+        this.manager = this.createEntityManager();
     }
 
     // -------------------------------------------------------------------------
@@ -143,7 +153,7 @@ export class Connection {
      * Available only in mongodb connections.
      */
     get mongoManager(): MongoEntityManager {
-        if (!(this.manager instanceof MongoEntityManager))
+        if ((this.manager.typeof as any) !== "MongoEntityManager") // todo: will need to figure out solution to use instead of any
             throw new Error(`MongoEntityManager is only available for MongoDB databases.`);
 
         return this.manager as MongoEntityManager;
@@ -155,7 +165,7 @@ export class Connection {
      * Available only in connection with the sqljs driver.
      */
     get sqljsManager(): SqljsEntityManager {
-        if (!(this.manager instanceof SqljsEntityManager))
+        if ((this.manager.typeof as any) !== "SqljsEntityManager") // todo: will need to figure out solution to use instead of any
             throw new Error(`SqljsEntityManager is only available for Sqljs databases.`);
 
         return this.manager as SqljsEntityManager;
@@ -164,6 +174,24 @@ export class Connection {
     // -------------------------------------------------------------------------
     // Public Methods
     // -------------------------------------------------------------------------
+
+    /**
+     * Updates current connection options with provided options.
+     */
+    setOptions(options: Partial<ConnectionOptions>): this {
+        Object.assign(this.options, options);
+
+        this.logger = new LoggerFactory().create(this.options.logger, this.options.logging);
+        this.driver = new DriverFactory().create(this);
+        this.namingStrategy = options.namingStrategy || new DefaultNamingStrategy();
+        this.entityFactory = options.entityFactory || new DefaultEntityFactory();
+        this.queryResultCache = options.cache ? new QueryResultCacheFactory(this).create() : undefined;
+
+        // build all metadatas to make sure options are valid
+        this.buildMetadatas();
+
+        return this;
+    }
 
     /**
      * Performs connection to the database.
@@ -187,22 +215,23 @@ export class Connection {
 
         try {
 
-            // build all metadatas registered in the current connection
-            this.buildMetadatas();
-
             await this.driver.afterConnect();
 
             // if option is set - drop schema once connection is done
             if (this.options.dropSchema)
                 await this.dropDatabase();
 
+            // if option is set - run migrations
+            if (this.options.migrationsRun)
+                await this.runMigrations();
+
             // if option is set - automatically synchronize a schema
             if (this.options.synchronize)
                 await this.synchronize();
 
             // if option is set - automatically synchronize a schema
-            if (this.options.migrationsRun)
-                await this.runMigrations({ transaction: this.options.migrationsTransactionMode });
+            // if (this.options.migrationsRun)
+            //     await this.runMigrations({ transaction: this.options.migrationsTransactionMode });
 
         } catch (error) {
 
@@ -319,14 +348,14 @@ export class Connection {
     /**
      * Checks if entity metadata exist for the given entity class, target name or table name.
      */
-    hasMetadata(target: Function|EntitySchema<any>|string): boolean {
+    hasMetadata(target: EntityTarget<any>): boolean {
         return !!this.findMetadata(target);
     }
 
     /**
      * Gets entity metadata for the given entity class or schema name.
      */
-    getMetadata(target: Function|EntitySchema<any>|string): EntityMetadata {
+    getMetadata(target: EntityTarget<any>): EntityMetadata {
         const metadata = this.findMetadata(target);
         if (!metadata)
             throw new EntityMetadataNotFoundError(target);
@@ -337,7 +366,7 @@ export class Connection {
     /**
      * Gets repository for the given entity.
      */
-    getRepository<Entity>(target: ObjectType<Entity>|EntitySchema<Entity>|string): Repository<Entity> {
+    getRepository<Entity>(target: EntityTarget<Entity>): Repository<Entity> {
         return this.manager.getRepository(target);
     }
 
@@ -345,7 +374,7 @@ export class Connection {
      * Gets tree repository for the given entity class or name.
      * Only tree-type entities can have a TreeRepository, like ones decorated with @Tree decorator.
      */
-    getTreeRepository<Entity>(target: ObjectType<Entity>|EntitySchema<Entity>|string): TreeRepository<Entity> {
+    getTreeRepository<Entity>(target: EntityTarget<Entity>): TreeRepository<Entity> {
         return this.manager.getTreeRepository(target);
     }
 
@@ -353,7 +382,7 @@ export class Connection {
      * Gets mongodb-specific repository for the given entity class or name.
      * Works only if connection is mongodb-specific.
      */
-    getMongoRepository<Entity>(target: ObjectType<Entity>|EntitySchema<Entity>|string): MongoRepository<Entity> {
+    getMongoRepository<Entity>(target: EntityTarget<Entity>): MongoRepository<Entity> {
         if (!(this.driver instanceof MongoDriver))
             throw new Error(`You can use getMongoRepository only for MongoDB connections.`);
 
@@ -362,6 +391,8 @@ export class Connection {
 
     /**
      * Gets custom entity repository marked with @EntityRepository decorator.
+     *
+     * @deprecated
      */
     getCustomRepository<T>(customRepository: ObjectType<T>): T {
         return this.manager.getCustomRepository(customRepository);
@@ -387,7 +418,7 @@ export class Connection {
      * Executes raw SQL query and returns raw database results.
      */
     async query(query: string, parameters?: any[], queryRunner?: QueryRunner): Promise<any> {
-        if (this instanceof MongoEntityManager)
+        if ((this.manager.typeof as any) === "MongoEntityManager") // todo: will need to figure out solution to use instead of any
             throw new Error(`Queries aren't supported by MongoDB.`);
 
         if (queryRunner && queryRunner.isReleased)
@@ -407,7 +438,7 @@ export class Connection {
     /**
      * Creates a new query builder that can be used to build a sql query.
      */
-    createQueryBuilder<Entity>(entityClass: ObjectType<Entity>|EntitySchema<Entity>|Function|string, alias: string, queryRunner?: QueryRunner): SelectQueryBuilder<Entity>;
+    createQueryBuilder<Entity>(entityClass: EntityTarget<Entity>, alias: string, queryRunner?: QueryRunner): SelectQueryBuilder<Entity>;
 
     /**
      * Creates a new query builder that can be used to build a sql query.
@@ -417,8 +448,8 @@ export class Connection {
     /**
      * Creates a new query builder that can be used to build a sql query.
      */
-    createQueryBuilder<Entity>(entityOrRunner?: ObjectType<Entity>|EntitySchema<Entity>|Function|string|QueryRunner, alias?: string, queryRunner?: QueryRunner): SelectQueryBuilder<Entity> {
-        if (this instanceof MongoEntityManager)
+    createQueryBuilder<Entity>(entityOrRunner?: EntityTarget<Entity>|QueryRunner, alias?: string, queryRunner?: QueryRunner): SelectQueryBuilder<Entity> {
+        if ((this.manager.typeof as any) === "MongoEntityManager") // todo: will need to figure out solution to use instead of any
             throw new Error(`Query Builder is not supported by MongoDB.`);
 
         if (alias) {
@@ -477,12 +508,15 @@ export class Connection {
     /**
      * Finds exist entity metadata by the given entity class, target name or table name.
      */
-    protected findMetadata(target: Function|EntitySchema<any>|string): EntityMetadata|undefined {
+    protected findMetadata(target: EntityTarget<any>): EntityMetadata|undefined {
         return this.entityMetadatas.find(metadata => {
             if (metadata.target === target)
                 return true;
             if (target instanceof EntitySchema) {
                 return metadata.name === target.options.name;
+            }
+            if (typeof target === "object" && target.name !== undefined) {
+                return metadata.name === target.name;
             }
             if (typeof target === "string") {
                 if (target.indexOf(".") !== -1) {
@@ -505,15 +539,27 @@ export class Connection {
         const entityMetadataValidator = new EntityMetadataValidator();
 
         // create subscribers instances if they are not disallowed from high-level (for example they can disallowed from migrations run process)
-        const subscribers = connectionMetadataBuilder.buildSubscribers(this.options.subscribers || []);
+        const optionSubscribers =
+            this.options.subscribers instanceof Array ? this.options.subscribers :
+            typeof this.options.subscribers === "object" ? Object.keys(this.options.subscribers).map(key => (this.options.subscribers as any)[key]) :
+            [];
+        const subscribers = connectionMetadataBuilder.buildSubscribers(optionSubscribers);
         ObjectUtils.assign(this, { subscribers: subscribers });
 
         // build entity metadatas
-        const entityMetadatas = connectionMetadataBuilder.buildEntityMetadatas(this.options.entities || []);
+        const optionEntities =
+            this.options.entities instanceof Array ? this.options.entities :
+            typeof this.options.entities === "object" ? Object.keys(this.options.entities).map(key => (this.options.entities as any)[key]) :
+            [];
+        const entityMetadatas = connectionMetadataBuilder.buildEntityMetadatas(optionEntities);
         ObjectUtils.assign(this, { entityMetadatas: entityMetadatas });
 
         // create migration instances
-        const migrations = connectionMetadataBuilder.buildMigrations(this.options.migrations || []);
+        const optionMigrations =
+            this.options.migrations instanceof Array ? this.options.migrations :
+            typeof this.options.migrations === "object" ? Object.keys(this.options.migrations).map(key => (this.options.migrations as any)[key]) :
+            [];
+        const migrations = connectionMetadataBuilder.buildMigrations(optionMigrations);
         ObjectUtils.assign(this, { migrations: migrations });
 
         this.driver.database = this.getDatabaseName();

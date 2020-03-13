@@ -1,6 +1,5 @@
 import {expect} from "chai";
 import "reflect-metadata";
-import {CockroachDriver} from "../../../../src/driver/cockroachdb/CockroachDriver";
 import {Album} from "./entity/Album";
 import {Category} from "./entity/Category";
 import {Connection} from "../../../../src";
@@ -79,33 +78,29 @@ describe("view entity > general", () => {
         const postCategories = await connection.manager.find(PostCategory);
         postCategories.length.should.be.equal(2);
 
-        const postId1 = connection.driver instanceof CockroachDriver ? "1" : 1;
-        postCategories[0].id.should.be.equal(postId1);
+        postCategories[0].id.should.be.equal(1);
         postCategories[0].name.should.be.equal("About BMW");
         postCategories[0].categoryName.should.be.equal("Cars");
 
-        const postId2 = connection.driver instanceof CockroachDriver ? "2" : 2;
-        postCategories[1].id.should.be.equal(postId2);
+        postCategories[1].id.should.be.equal(2);
         postCategories[1].name.should.be.equal("About Boeing");
         postCategories[1].categoryName.should.be.equal("Airplanes");
 
         const photoAlbumCategories = await connection.manager.find(PhotoAlbumCategory);
         photoAlbumCategories.length.should.be.equal(2);
 
-        const photoId1 = connection.driver instanceof CockroachDriver ? "1" : 1;
-        photoAlbumCategories[0].id.should.be.equal(photoId1);
+        photoAlbumCategories[0].id.should.be.equal(1);
         photoAlbumCategories[0].name.should.be.equal("BMW E39");
         photoAlbumCategories[0].albumName.should.be.equal("BMW photos");
         photoAlbumCategories[0].categoryName.should.be.equal("Cars");
 
-        const photoId2 = connection.driver instanceof CockroachDriver ? "2" : 2;
-        photoAlbumCategories[1].id.should.be.equal(photoId2);
+        photoAlbumCategories[1].id.should.be.equal(2);
         photoAlbumCategories[1].name.should.be.equal("BMW E60");
         photoAlbumCategories[1].albumName.should.be.equal("BMW photos");
         photoAlbumCategories[1].categoryName.should.be.equal("Cars");
 
         const photoAlbumCategory = await connection.manager.findOne(PhotoAlbumCategory, { id: 1 });
-        photoAlbumCategory!.id.should.be.equal(photoId1);
+        photoAlbumCategory!.id.should.be.equal(1);
         photoAlbumCategory!.name.should.be.equal("BMW E39");
         photoAlbumCategory!.albumName.should.be.equal("BMW photos");
         photoAlbumCategory!.categoryName.should.be.equal("Cars");

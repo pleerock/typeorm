@@ -4,15 +4,22 @@ import {JoinColumn} from "../../../../../../src/decorator/relations/JoinColumn";
 import {User} from "./User";
 import {ManyToOne} from "../../../../../../src/decorator/relations/ManyToOne";
 import {Post} from "./Post";
+import {PrimaryColumn} from "../../../../../../src/decorator/columns/PrimaryColumn";
 
 @Entity()
 export class Editor {
 
-    @OneToOne(type => User, { eager: true, primary: true })
+    @PrimaryColumn()
+    userId: number;
+
+    @PrimaryColumn()
+    postId: number;
+
+    @OneToOne(type => User, { eager: true })
     @JoinColumn()
     user: User;
 
-    @ManyToOne(type => Post, { primary: true })
+    @ManyToOne(type => Post)
     post: Post;
 
 }

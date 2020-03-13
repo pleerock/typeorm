@@ -7,10 +7,10 @@ export class PhotoMetadata {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column("int")
+  @Column()
   height: number;
 
-  @Column("int")
+  @Column()
   width: number;
 
   @Column()

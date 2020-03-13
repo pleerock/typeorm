@@ -1,9 +1,9 @@
+import {EntityMetadata} from "../..";
 import {ColumnMetadata} from "../../metadata/ColumnMetadata";
 import {RelationMetadata} from "../../metadata/RelationMetadata";
 import {EntityManager} from "../../entity-manager/EntityManager";
 import {QueryRunner} from "../../query-runner/QueryRunner";
 import {Connection} from "../../connection/Connection";
-import { EntityMetadata } from "../../metadata/EntityMetadata";
 
 /**
  * UpdateEvent is an object that broadcaster sends to the entity subscriber when entity is being updated in the database.

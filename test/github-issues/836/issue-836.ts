@@ -38,6 +38,7 @@ describe("github issues > #836 .save won't update entity when it contains OneToO
         // check if credentials and user are saved properly
         const loadedCredentials = await connection.manager.findOne(UserCredential, 2, { relations: ["user"] });
         loadedCredentials!.should.be.eql({
+            id: 2,
             user: {
                 id: 2,
                 email: "user2@user.com",

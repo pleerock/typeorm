@@ -1,4 +1,5 @@
 import * as yargs from "yargs";
+
 const exec = require("child_process").exec;
 
 /**

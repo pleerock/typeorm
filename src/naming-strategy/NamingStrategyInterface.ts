@@ -121,4 +121,4 @@ export interface NamingStrategyInterface {
      * Gets the name of the alias used for relation joins.
      */
     eagerJoinRelationAlias(alias: string, propertyPath: string): string;
-}
+ }

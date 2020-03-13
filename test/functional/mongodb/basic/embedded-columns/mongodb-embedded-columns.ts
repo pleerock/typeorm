@@ -4,8 +4,6 @@ import {closeTestingConnections, createTestingConnections, reloadTestingDatabase
 import {Post} from "./entity/Post";
 import {Counters} from "./entity/Counters";
 import {Information} from "./entity/Information";
-import {ExtraInformation} from "./entity/ExtraInformation";
-import {EditHistory} from "./entity/EditHistory";
 import {expect} from "chai";
 
 describe("mongodb > embedded columns", () => {
@@ -127,35 +125,6 @@ describe("mongodb > embedded columns", () => {
         loadedPosts[0]!.counters.favorites.should.be.equal(1);
         loadedPosts[0]!.counters.information.visible.should.be.equal(true);
         loadedPosts[0]!.counters.information.editable.should.be.equal(false);
-
-    })));
-
-    
-    it("should transform entity with nested embedded columns correctly", () => Promise.all(connections.map(async connection => {
-        const postRepository = connection.getMongoRepository(Post);
-
-        // save few posts
-        const post = new Post();
-        post.title = "Post #1";
-        post.text = "Everything about post";
-        post.counters = new Counters();
-        post.counters.likes = 5;
-        post.counters.comments = 0;
-        post.counters.favorites = 1;
-        post.counters.information = new Information();
-        post.counters.information.description = "Hello post";
-        post.counters.extraInformation = new ExtraInformation();
-        post.counters.extraInformation.lastEdit = new EditHistory();
-        post.counters.extraInformation.lastEdit.title = "Old Post Title";
-        post.counters.extraInformation.lastEdit.text = "Not everything about post";
-        await postRepository.save(post);
-
-        const [loadedPost] = await postRepository.find();
-
-        loadedPost.counters.comments.should.be.equal(0);
-        loadedPost.counters.favorites.should.be.equal(1);
-        loadedPost.counters.extraInformation.lastEdit.title.should.be.eql("Old Post Title");
-        loadedPost.counters.extraInformation.lastEdit.text.should.be.eql("Not everything about post");
 
     })));
 });

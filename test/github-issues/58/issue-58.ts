@@ -59,14 +59,18 @@ describe("github issues > #58 relations with multiple primary keys", () => {
                 category: {
                     id: 1,
                     name: "category #1"
-                }
+                },
+                categoryId: 1,
+                postId: 1
             }, {
                 addedByAdmin: false,
                 addedByUser: true,
                 category: {
                     id: 2,
                     name: "category #2"
-                }
+                },
+                categoryId: 2,
+                postId: 1
             }]
         });
 

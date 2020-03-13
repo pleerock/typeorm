@@ -143,8 +143,10 @@ export class SubjectExecutor {
         // console.timeEnd(".updation");
 
         // make sure our remove subjects are sorted (using topological sorting) when multiple entities are passed for the removal
-        // console.time(".removal");
+        // console.time(".SubjectTopoligicalSorter");
         this.removeSubjects = new SubjectTopoligicalSorter(this.removeSubjects).sort("delete");
+        // console.timeEnd(".SubjectTopoligicalSorter");
+        // console.time(".removal");
         await this.executeRemoveOperations();
         // console.timeEnd(".removal");
 
@@ -320,6 +322,7 @@ export class SubjectExecutor {
                         .values(bulkInsertMaps)
                         .updateEntity(this.options && this.options.reload === false ? false : true)
                         .callListeners(false)
+                        .callObservers(false)
                         .execute();
 
                     bulkInsertSubjects.forEach((subject, index) => {
@@ -346,6 +349,7 @@ export class SubjectExecutor {
                             .values(subject.insertedValueSet)
                             .updateEntity(this.options && this.options.reload === false ? false : true)
                             .callListeners(false)
+                            .callObservers(false)
                             .execute()
                             .then(insertResult => {
                                 subject.identifier = insertResult.identifiers[0];
@@ -419,7 +423,8 @@ export class SubjectExecutor {
                     .update(subject.metadata.target)
                     .set(updateMap)
                     .updateEntity(this.options && this.options.reload === false ? false : true)
-                    .callListeners(false);
+                    .callListeners(false)
+                    .callObservers(false);
 
                 if (subject.entity) {
                     updateQueryBuilder.whereEntity(subject.identifier);
@@ -491,6 +496,7 @@ export class SubjectExecutor {
                     .from(subjects[0].metadata.target)
                     .where(deleteMaps)
                     .callListeners(false)
+                    .callObservers(false)
                     .execute();
             }
         });

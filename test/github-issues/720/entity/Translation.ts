@@ -5,16 +5,23 @@ import {JoinColumn} from "../../../../src/decorator/relations/JoinColumn";
 import {Column} from "../../../../src/decorator/columns/Column";
 import {Message} from "./Message";
 import {Locale} from "./Locale";
+import {PrimaryColumn} from "../../../../src/decorator/columns/PrimaryColumn";
 
 @Entity()
 @Index(["locale", "message"], { unique: true })
 export class Translation {
 
-    @ManyToOne(() => Locale, { primary: true, nullable: false })
+    @PrimaryColumn()
+    localeCode: string;
+
+    @PrimaryColumn()
+    messageId: number;
+
+    @ManyToOne(() => Locale)
     @JoinColumn()
     locale: Locale;
 
-    @ManyToOne(() => Message, { primary: true, nullable: false })
+    @ManyToOne(() => Message)
     @JoinColumn()
     message: Message;
 

@@ -13,8 +13,6 @@ import {RelationIdMetadataArgs} from "./RelationIdMetadataArgs";
 import {InheritanceMetadataArgs} from "./InheritanceMetadataArgs";
 import {DiscriminatorValueMetadataArgs} from "./DiscriminatorValueMetadataArgs";
 import {EntityRepositoryMetadataArgs} from "./EntityRepositoryMetadataArgs";
-import {TransactionEntityMetadataArgs} from "./TransactionEntityMetadataArgs";
-import {TransactionRepositoryMetadataArgs} from "./TransactionRepositoryMetadataArgs";
 import {MetadataUtils} from "../metadata-builder/MetadataUtils";
 import {GeneratedMetadataArgs} from "./GeneratedMetadataArgs";
 import {TreeMetadataArgs} from "./TreeMetadataArgs";
@@ -36,8 +34,6 @@ export class MetadataArgsStorage {
     readonly tables: TableMetadataArgs[] = [];
     readonly trees: TreeMetadataArgs[] = [];
     readonly entityRepositories: EntityRepositoryMetadataArgs[] = [];
-    readonly transactionEntityManagers: TransactionEntityMetadataArgs[] = [];
-    readonly transactionRepositories: TransactionRepositoryMetadataArgs[] = [];
     readonly namingStrategies: NamingStrategyMetadataArgs[] = [];
     readonly entitySubscribers: EntitySubscriberMetadataArgs[] = [];
     readonly indices: IndexMetadataArgs[] = [];
@@ -172,18 +168,6 @@ export class MetadataArgsStorage {
     filterNamingStrategies(target: (Function|string)[]): NamingStrategyMetadataArgs[];
     filterNamingStrategies(target: (Function|string)|(Function|string)[]): NamingStrategyMetadataArgs[] {
         return this.filterByTarget(this.namingStrategies, target);
-    }
-
-    filterTransactionEntityManagers(target: Function|string, propertyName: string): TransactionEntityMetadataArgs[] {
-        return this.transactionEntityManagers.filter(transactionEm => {
-            return (Array.isArray(target) ? target.indexOf(transactionEm.target) !== -1 : transactionEm.target === target) && transactionEm.methodName === propertyName;
-        });
-    }
-
-    filterTransactionRepository(target: Function|string, propertyName: string): TransactionRepositoryMetadataArgs[] {
-        return this.transactionRepositories.filter(transactionEm => {
-            return (Array.isArray(target) ? target.indexOf(transactionEm.target) !== -1 : transactionEm.target === target) && transactionEm.methodName === propertyName;
-        });
     }
 
     filterSingleTableChildren(target: Function|string): TableMetadataArgs[] {

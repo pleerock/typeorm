@@ -69,6 +69,23 @@ To create an initial `ormconfig.json` file, run the following command:
 cp ormconfig.json.dist ormconfig.json
 ```
 
+## Compiling
+
+To transpile for running tests, run
+
+```shell
+npm run compile
+```
+
+>**Hint:** because transpiling the full project can take a while, you can set typescript to
+>compile in 'watch' mode, where it will only compile modified files when they are saved.
+>
+>```shell
+>npm run compile -- -w
+>```
+>
+>This is useful when you are making changes to either production code or tests and iterating.
+
 ## Building
 
 To build a distribution package of TypeORM run:
@@ -130,6 +147,15 @@ Then run tests:
 ```shell
 npm test
 ```
+
+>**Hint:** running ```npm test``` will transpile before running tests. If you have already compiled, or are
+>letting typescript run in watch mode, you can execute:
+>
+>```shell
+>npm run test-no-compile
+>```
+>
+>which omits the compile step.
 
 You should execute test suites before submitting a PR to github.
 All the tests are executed on our Continuous Integration infrastructure and a PR could only be merged once the tests pass.

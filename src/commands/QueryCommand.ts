@@ -4,6 +4,7 @@ import {ConnectionOptionsReader} from "../connection/ConnectionOptionsReader";
 import {Connection} from "../connection/Connection";
 import {PlatformTools} from "../platform/PlatformTools";
 import * as yargs from "yargs";
+
 const chalk = require("chalk");
 
 /**

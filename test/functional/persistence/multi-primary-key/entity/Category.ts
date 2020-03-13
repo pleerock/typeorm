@@ -9,7 +9,7 @@ import {Generated} from "../../../../../src/decorator/Generated";
 @Entity()
 export class Category {
 
-    @PrimaryColumn("int")
+    @PrimaryColumn()
     @Generated()
     categoryId: number;
 

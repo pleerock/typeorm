@@ -1,10 +1,11 @@
-import {Connection} from "../connection/Connection";
-import {EntityManager} from "./EntityManager";
-import {MongoEntityManager} from "./MongoEntityManager";
-import {MongoDriver} from "../driver/mongodb/MongoDriver";
-import {SqljsEntityManager} from "./SqljsEntityManager";
-import {SqljsDriver} from "../driver/sqljs/SqljsDriver";
-import {QueryRunner} from "../query-runner/QueryRunner";
+import { Connection } from "../connection/Connection";
+import { MongoDriver } from "../driver/mongodb/MongoDriver";
+import { SqljsDriver } from "../driver/sqljs/SqljsDriver";
+import { QueryRunner } from "../query-runner/QueryRunner";
+import { EntityManager } from "./EntityManager";
+import { createLiteralEntityManager } from "./LiteralEntityManager";
+import { createLiteralMongoEntityManager } from "./LiteralMongoEntityManager";
+import { createLiteralSqljsEntityManager } from "./LiteralSqljsEntityManager";
 
 /**
  * Helps to create entity managers.
@@ -16,12 +17,12 @@ export class EntityManagerFactory {
      */
     create(connection: Connection, queryRunner?: QueryRunner): EntityManager {
         if (connection.driver instanceof MongoDriver)
-            return new MongoEntityManager(connection);
+            return createLiteralMongoEntityManager({ connection });
 
         if (connection.driver instanceof SqljsDriver)
-            return new SqljsEntityManager(connection, queryRunner);
+            return createLiteralSqljsEntityManager({ connection, queryRunner });
 
-        return new EntityManager(connection, queryRunner);
+        return createLiteralEntityManager({ connection, queryRunner });
     }
 
 }

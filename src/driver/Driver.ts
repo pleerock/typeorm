@@ -136,7 +136,7 @@ export interface Driver {
     /**
      * Transforms type of the given column to a database column type.
      */
-    normalizeType(column: { type?: ColumnType|string, length?: number|string, precision?: number|null, scale?: number, isArray?: boolean }): string;
+    normalizeType(column: { type?: ColumnType|string, length?: number | string, precision?: number, scale?: number, isArray?: boolean }): string;
 
     /**
      * Normalizes "default" value of the column.

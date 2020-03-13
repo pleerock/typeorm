@@ -3,18 +3,23 @@ import {Column} from "../../../../src/decorator/columns/Column";
 import {Post} from "./Post";
 import {ManyToOne} from "../../../../src/decorator/relations/ManyToOne";
 import {Category} from "./Category";
+import {PrimaryColumn} from "../../../../src/decorator/columns/PrimaryColumn";
 
 @Entity()
 export class PostCategory {
 
+    @PrimaryColumn()
+    postId: number;
+
+    @PrimaryColumn()
+    categoryId: number;
+
     @ManyToOne(type => Post, post => post.categories, {
-        primary: true,
         cascade: ["insert"]
     })
     post: Post;
 
     @ManyToOne(type => Category, category => category.posts, {
-        primary: true,
         cascade: ["insert"]
     })
     category: Category;

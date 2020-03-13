@@ -1,3 +1,12 @@
+
+## 0.3.0 (next)
+
+* find options interface was completely re-written (find options is parameter passed to find* methods)
+* now query builder adds joins to eager relations by default (previously only find methods did that)
+* `primary` flag has been removed from relation decorators. Now if you want to make a relation primary you must define a primary column with the same name relation uses
+* added observer methods to repositories and entity manager
+* `findOne` now throws error if no (or wrong) criteria supplied
+
 ## [0.2.23](https://github.com/typeorm/typeorm/compare/0.2.22...0.2.23), [0.2.24](https://github.com/typeorm/typeorm/compare/0.2.23...0.2.24) (2020-02-28)
 
 ### Bug Fixes
@@ -24,6 +33,7 @@
 * add fulltext parser option ([#5380](https://github.com/typeorm/typeorm/issues/5380)) ([dd73395](https://github.com/typeorm/typeorm/commit/dd73395))
 
 ## [0.2.22](https://github.com/typeorm/typeorm/compare/0.2.21...0.2.22) (2019-12-23)
+
 
 ### Bug Fixes
 
@@ -180,11 +190,7 @@
 * fixed: changes in enum type is not reflected when generating migration (in definition file) ([#3244](https://github.com/typeorm/typeorm/issues/3244))
 * fixed: migration will keep create and drop indexes if index name is the same across tables ([#3379](https://github.com/typeorm/typeorm/issues/3379))
 
-### Features
-
-* added `lock` option in `FindOptions`
-
-## 0.2.15 (2019-03-14)
+## 0.2.15
 
 ### Bug fixes
 

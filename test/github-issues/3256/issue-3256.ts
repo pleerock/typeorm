@@ -2,6 +2,7 @@ import "reflect-metadata";
 import {closeTestingConnections, createTestingConnections, reloadTestingDatabases} from "../../utils/test-utils";
 import {Connection} from "../../../src/connection/Connection";
 import {Post} from "./entity/Post";
+import { OldEntityFactory } from "../../../src";
 
 describe("github issues > #3256 wrong subscriber methods being called", () => {
 
@@ -9,6 +10,7 @@ describe("github issues > #3256 wrong subscriber methods being called", () => {
     before(async () => connections = await createTestingConnections({
         entities: [__dirname + "/entity/*{.js,.ts}"],
         subscribers: [__dirname + "/subscriber/*{.js,.ts}"],
+        entityFactory:  new OldEntityFactory()
     }));
     beforeEach(() => reloadTestingDatabases(connections));
     after(() => closeTestingConnections(connections));

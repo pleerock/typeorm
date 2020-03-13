@@ -5,7 +5,6 @@ import {RelationMetadata} from "./RelationMetadata";
 import {ObjectLiteral} from "../common/ObjectLiteral";
 import {ColumnMetadataArgs} from "../metadata-args/ColumnMetadataArgs";
 import {Connection} from "../connection/Connection";
-import {OrmUtils} from "../util/OrmUtils";
 import {ValueTransformer} from "../decorator/options/ValueTransformer";
 import {MongoDriver} from "../driver/mongodb/MongoDriver";
 import {PromiseUtils} from "../util/PromiseUtils";
@@ -131,7 +130,7 @@ export class ColumnMetadata {
      * The precision for a decimal (exact numeric) column (applies only for decimal column),
      * which is the maximum number of digits that are stored for the values.
      */
-    precision?: number|null;
+    precision?: number;
 
     /**
      * The scale for a decimal (exact numeric) column (applies only for decimal column),
@@ -361,7 +360,7 @@ export class ColumnMetadata {
             this.default = options.args.options.default;
         if (options.args.options.onUpdate)
             this.onUpdate = options.args.options.onUpdate;
-        if (options.args.options.scale !== null && options.args.options.scale !== undefined)
+        if (options.args.options.scale !== undefined)
             this.scale = options.args.options.scale;
         if (options.args.options.zerofill) {
             this.zerofill = options.args.options.zerofill;
@@ -543,22 +542,10 @@ export class ColumnMetadata {
             return Object.keys(map).length > 0 ? map : undefined;
 
         } else { // no embeds - no problems. Simply return column property name and its value of the entity
-            if (this.relationMetadata && entity[this.propertyName] && entity[this.propertyName] instanceof Object) {
-                const map = this.relationMetadata.joinColumns.reduce((map, joinColumn) => {
-                    const value = joinColumn.referencedColumn!.getEntityValueMap(entity[this.propertyName]);
-                    if (value === undefined) return map;
-                    return OrmUtils.mergeDeep(map, value);
-                }, {});
-                if (Object.keys(map).length > 0)
-                    return { [this.propertyName]: map };
+            if (entity[this.propertyName] !== undefined && (returnNulls === false || entity[this.propertyName] !== null))
+                return { [this.propertyName]: entity[this.propertyName] };
 
-                return undefined;
-            } else {
-                if (entity[this.propertyName] !== undefined && (returnNulls === false || entity[this.propertyName] !== null))
-                    return { [this.propertyName]: entity[this.propertyName] };
-
-                return undefined;
-            }
+            return undefined;
         }
     }
 
@@ -665,6 +652,17 @@ export class ColumnMetadata {
         } else {
             entity[this.propertyName] = value;
         }
+    }
+
+    /**
+     * Compares given entity's column value with a given value.
+     */
+    compareEntityValue(entity: any, valueToCompareWith: any) {
+        const columnValue = this.getEntityValue(entity);
+        if (columnValue instanceof Object) {
+            return columnValue.equals(valueToCompareWith);
+        }
+        return columnValue === valueToCompareWith;
     }
 
     // ---------------------------------------------------------------------

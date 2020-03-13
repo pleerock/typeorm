@@ -37,7 +37,9 @@ export class RawSqlResultsToEntityTransformer {
      * we need to group our result and we must have some unique id (primary key in our case)
      */
     transform(rawResults: any[], alias: Alias): any[] {
+        // console.time("grouping");
         const group = this.group(rawResults, alias);
+        // console.timeEnd("grouping");
         const entities: any[] = [];
         group.forEach(results => {
             const entity = this.transformRawResultsGroup(results, alias);
@@ -99,7 +101,8 @@ export class RawSqlResultsToEntityTransformer {
             if (discriminatorMetadata)
                 metadata = discriminatorMetadata;
         }
-        let entity: any = this.expressionMap.options.indexOf("create-pojo") !== -1 ? {} : metadata.create(this.queryRunner);
+        const createPojo = this.expressionMap.options.indexOf("create-pojo") !== -1;
+        let entity: any = metadata.create(this.queryRunner, createPojo);
 
         // get value from columns selections and put them into newly created entity
         const hasColumns = this.transformColumns(rawResults, alias, entity, metadata);
@@ -234,7 +237,7 @@ export class RawSqlResultsToEntityTransformer {
                 const idMap = columns.reduce((idMap, column) => {
                     let value = result[column.databaseName];
                     if (relation.isOneToMany || relation.isOneToOneNotOwner) {
-                        if (column.referencedColumn) // if column is a relation
+                        if (column.referencedColumn && column.isVirtual) // if column is a relation // column.isVirtual is a new check make sure everything gonna work
                             value = column.referencedColumn.createValueMap(value);
 
                         return OrmUtils.mergeDeep(idMap, column.createValueMap(value));
@@ -255,7 +258,6 @@ export class RawSqlResultsToEntityTransformer {
                 }
                 return idMap;
             }).filter(result => result);
-
 
             const properties = rawRelationIdResult.relationIdAttribute.mapToPropertyPropertyPath.split(".");
             const mapToProperty = (properties: string[], map: ObjectLiteral, value: any): any => {

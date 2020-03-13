@@ -103,8 +103,8 @@ export class RelationIdAttribute {
      * Generates alias of junction table, whose ids we get.
      */
     get junctionAlias(): string {
-        const [parentAlias, relationProperty] = this.relationName.split(".");
-        return parentAlias + "_" + relationProperty + "_rid";
+        const [parentAlias, relationProperty] = QueryBuilderUtils.extractAliasAndPropertyPath(this.relationName);
+        return parentAlias + "_" + relationProperty.replace(".", "_") + "_rid";
     }
 
     /**

@@ -7,6 +7,7 @@ import {EntitySchema} from "../../src/entity-schema/EntitySchema";
 import {createConnections} from "../../src/index";
 import {NamingStrategyInterface} from "../../src/naming-strategy/NamingStrategyInterface";
 import {PromiseUtils} from "../../src/util/PromiseUtils";
+import {EntityFactoryInterface} from "../../src/entity-factory/EntityFactoryInterface";
 import {QueryResultCache} from "../../src/cache/QueryResultCache";
 
 /**
@@ -63,6 +64,11 @@ export interface TestingOptions {
      * Subscribers needs to be included in the connection for the given test suite.
      */
     subscribers?: string[]|Function[];
+
+    /**
+     * Entity factory needs to be included in the connection for the given test suite.
+     */
+    entityFactory?: EntityFactoryInterface;
 
     /**
      * Indicates if schema sync should be performed or not.
@@ -225,6 +231,8 @@ export function setupTestingConnections(options?: TestingOptions): ConnectionOpt
                 newOptions.migrations = [options.__dirname + "/migration/*{.js,.ts}"];
             if (options && options.namingStrategy)
                 newOptions.namingStrategy = options.namingStrategy;
+            if (options && options.entityFactory)
+                newOptions.entityFactory = options.entityFactory;
             return newOptions;
         });
 }
@@ -244,7 +252,12 @@ export async function createTestingConnections(options?: TestingOptions): Promis
         });
 
         const queryRunner = connection.createQueryRunner();
-        await PromiseUtils.runInSequence(databases, database => queryRunner.createDatabase(database, true));
+        await PromiseUtils.runInSequence(databases, database => {
+            if (!(connection.driver instanceof PostgresDriver))
+                return queryRunner.createDatabase(database, true);
+
+            return Promise.resolve();
+        });
 
         // create new schemas
         if (connection.driver instanceof PostgresDriver || connection.driver instanceof SqlServerDriver) {

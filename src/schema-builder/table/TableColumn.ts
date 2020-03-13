@@ -91,7 +91,7 @@ export class TableColumn {
      * The precision for a decimal (exact numeric) column (applies only for decimal column), which is the maximum
      * number of digits that are stored for the values.
      */
-    precision?: number|null;
+    precision?: number;
 
     /**
      * The scale for a decimal (exact numeric) column (applies only for decimal column), which represents the number

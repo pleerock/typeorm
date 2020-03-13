@@ -27,12 +27,7 @@ describe("cascades > should insert by cascades from both sides (#57)", () => {
 
         // now check
         const posts = await connection.manager.find(Post, {
-            join: {
-                alias: "post",
-                innerJoinAndSelect: {
-                    details: "post.details"
-                }
-            }
+            relations: ["details"]
         });
 
         posts.should.be.eql([{

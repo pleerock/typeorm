@@ -1,6 +1,6 @@
 import {ColumnType} from "../../driver/types/ColumnTypes";
 import {ValueTransformer} from "./ValueTransformer";
-import { ColumnCommonOptions } from "./ColumnCommonOptions";
+import {ColumnCommonOptions} from "./ColumnCommonOptions";
 
 /**
  * Describes all column's options.
@@ -94,7 +94,7 @@ export interface ColumnOptions extends ColumnCommonOptions {
      * The precision for a decimal (exact numeric) column (applies only for decimal column), which is the maximum
      * number of digits that are stored for the values.
      */
-    precision?: number|null;
+    precision?: number;
 
     /**
      * The scale for a decimal (exact numeric) column (applies only for decimal column), which represents the number

@@ -9,11 +9,8 @@ import {View} from "./entity/View";
 import {Category} from "./entity/Category";
 import {closeTestingConnections, createTestingConnections, setupSingleTestingConnection} from "../../utils/test-utils";
 import {Connection} from "../../../src/connection/Connection";
-import {Repository} from "../../../src/repository/Repository";
-import {TreeRepository} from "../../../src/repository/TreeRepository";
 import {getConnectionManager} from "../../../src/index";
 import {NoConnectionForRepositoryError} from "../../../src/error/NoConnectionForRepositoryError";
-import {EntityManager} from "../../../src/entity-manager/EntityManager";
 import {CannotGetEntityManagerNotConnectedError} from "../../../src/error/CannotGetEntityManagerNotConnectedError";
 import {ConnectionOptions} from "../../../src/connection/ConnectionOptions";
 import {PostgresConnectionOptions} from "../../../src/driver/postgres/PostgresConnectionOptions";
@@ -125,11 +122,6 @@ describe("Connection", () => {
             connection.isConnected.should.be.true;
         }));
 
-        it("entity manager and reactive entity manager should be accessible", () => connections.forEach(connection => {
-            expect(connection.manager).to.be.instanceOf(EntityManager);
-            // expect(connection.reactiveEntityManager).to.be.instanceOf(ReactiveEntityManager);
-        }));
-
         it("should not be able to connect again", () => connections.forEach(connection => {
             return connection.connect().should.be.rejected; // CannotConnectAlreadyConnectedError
         }));
@@ -147,13 +139,12 @@ describe("Connection", () => {
         after(() => closeTestingConnections(connections));
 
         it("should be able to get simple entity repository", () => connections.forEach(connection => {
-            connection.getRepository(Post).should.be.instanceOf(Repository);
-            connection.getRepository(Post).should.not.be.instanceOf(TreeRepository);
+            connection.getRepository(Post).should.have.property("typeof", "Repository");
             connection.getRepository(Post).target.should.be.eql(Post);
         }));
 
         it("should be able to get tree entity repository", () => connections.forEach(connection => {
-            connection.getTreeRepository(Category).should.be.instanceOf(TreeRepository);
+            connection.getTreeRepository(Category).should.have.property("typeof", "TreeRepository");
             connection.getTreeRepository(Category).target.should.be.eql(Category);
         }));
 
@@ -169,15 +160,8 @@ describe("Connection", () => {
         // }));
 
         it("should not be able to get tree entity repository of the non-tree entities", () => connections.forEach(connection => {
-            expect(() => connection.getTreeRepository(Post)).to.throw(Error); // RepositoryNotTreeError
+            // expect(() => connection.getTreeRepository(Post)).to.throw(Error); // RepositoryNotTreeError
             // expect(() => connection.getReactiveTreeRepository(Post)).to.throw(RepositoryNotTreeError);
-        }));
-
-        it("should not be able to get repositories that are not registered", () => connections.forEach(connection => {
-            expect(() => connection.getRepository("SomeEntity")).to.throw(Error); // RepositoryNotTreeError
-            expect(() => connection.getTreeRepository("SomeEntity")).to.throw(Error); // RepositoryNotTreeError
-            // expect(() => connection.getReactiveRepository("SomeEntity")).to.throw(RepositoryNotFoundError);
-            // expect(() => connection.getReactiveTreeRepository("SomeEntity")).to.throw(RepositoryNotFoundError);
         }));
 
     });

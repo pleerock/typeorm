@@ -6,7 +6,7 @@ import {Month} from "./entity/month";
 import {User} from "./entity/user";
 import {UserMonth} from "./entity/user-month";
 
-describe.skip("github issues > #1685 JoinColumn from JoinColum is not considered when inserting new value", () => {
+describe("github issues > #1685 JoinColumn from JoinColum is not considered when inserting new value", () => {
 
     let connections: Connection[];
     before(async () => connections = await createTestingConnections({

@@ -13,6 +13,8 @@ import {GeneratedMetadataArgs} from "../metadata-args/GeneratedMetadataArgs";
 import {UniqueMetadataArgs} from "../metadata-args/UniqueMetadataArgs";
 import {CheckMetadataArgs} from "../metadata-args/CheckMetadataArgs";
 import {ExclusionMetadataArgs} from "../metadata-args/ExclusionMetadataArgs";
+import {EntitySchemaColumnOptions} from "./EntitySchemaColumnOptions";
+import {Connection} from "..";
 
 /**
  * Transforms entity schema into metadata args storage.
@@ -26,16 +28,66 @@ export class EntitySchemaTransformer {
 
     /**
      * Transforms entity schema into new metadata args storage object.
+     *
+     * todo: we need to add embeddeds support
      */
-    transform(schemas: EntitySchema<any>[]): MetadataArgsStorage {
+    transform(connection: Connection, schemas: EntitySchema<any>[]): MetadataArgsStorage {
         const metadataArgsStorage = new MetadataArgsStorage();
+
+        // todo: to support this functionality in ORM we need ORM to support schemas with custom function that finds a
+        // todo: a target and targetName / entityName
+        const mappedRelationTargets = connection.options.mappedEntitySchemaProperties || [];
 
         schemas.forEach(entitySchema => {
             const options = entitySchema.options;
+            if (!options.name)
+                throw new Error(`EntitySchema missing "name" property.`);
+            const optionsName = options.name;
+
+            const columns = entitySchema.options.columns || {};
+            const relations = entitySchema.options.relations || {};
+
+            if (entitySchema.options.projection) {
+                for (let propertyName in entitySchema.options.projection) {
+                    if (entitySchema.options.projection.hasOwnProperty(propertyName)) {
+                        const schemaOptions = (entitySchema.options.projection as any)[propertyName];
+
+                        // if there is a type - it means it is a column
+                        if (schemaOptions.type !== undefined) {
+                            columns[propertyName] = schemaOptions as EntitySchemaColumnOptions;
+                        }
+
+                        // if there is a relation - it means it is a relation
+                        if (schemaOptions.relation !== undefined) {
+                            let relation = schemaOptions as any;
+                            let target = relation.with;
+
+                            if (!target) {
+                                const mappedRelationTarget = mappedRelationTargets.find(mappedTarget => {
+                                    return mappedTarget.model === optionsName && mappedTarget.property === propertyName;
+                                });
+                                if (mappedRelationTarget && !relation.with) {
+                                    target = mappedRelationTarget.target;
+                                }
+                            }
+                            if (target) {
+                                relations[propertyName] = {
+                                    target: target,
+                                    type: relation.relation,
+                                    inverseSide: relation.inverse,
+                                    joinColumn: relation.joinColumnOptions ? relation.joinColumnOptions : relation.owner,
+                                    joinTable: relation.joinTableOptions ? relation.joinTableOptions : relation.owner,
+                                    ...relation,
+                                };
+                            }
+                        }
+                    }
+                }
+            }
 
             // add table metadata args from the schema
             const tableMetadata: TableMetadataArgs = {
-                target: options.target || options.name,
+                target: options.target || optionsName,
                 name: options.tableName,
                 database: options.database,
                 schema: options.schema,
@@ -47,8 +99,8 @@ export class EntitySchemaTransformer {
             metadataArgsStorage.tables.push(tableMetadata);
 
             // add columns metadata args from the schema
-            Object.keys(options.columns).forEach(columnName => {
-                const column = options.columns[columnName]!;
+            Object.keys(columns).forEach(columnName => {
+                const column = columns[columnName]!;
                 let mode: ColumnMode = "regular";
                 if (column.createDate)
                     mode = "createDate";
@@ -66,7 +118,7 @@ export class EntitySchemaTransformer {
                     mode = "objectId";
 
                 const columnAgrs: ColumnMetadataArgs = {
-                    target: options.target || options.name,
+                    target: options.target || optionsName,
                     mode: mode,
                     propertyName: columnName,
                     options: {
@@ -104,7 +156,7 @@ export class EntitySchemaTransformer {
 
                 if (column.generated) {
                     const generationArgs: GeneratedMetadataArgs = {
-                        target: options.target || options.name,
+                        target: options.target || optionsName,
                         propertyName: columnName,
                         strategy: typeof column.generated === "string" ? column.generated : "increment"
                     };
@@ -112,15 +164,15 @@ export class EntitySchemaTransformer {
                 }
 
                 if (column.unique)
-                    metadataArgsStorage.uniques.push({ target: options.target || options.name, columns: [columnName] });
+                    metadataArgsStorage.uniques.push({ target: options.target || optionsName, columns: [columnName] });
             });
 
             // add relation metadata args from the schema
-            if (options.relations) {
-                Object.keys(options.relations).forEach(relationName => {
-                    const relationSchema = options.relations![relationName]!;
+            if (relations) {
+                Object.keys(relations).forEach(relationName => {
+                    const relationSchema = relations[relationName]!;
                     const relation: RelationMetadataArgs = {
-                        target: options.target || options.name,
+                        target: options.target || optionsName,
                         propertyName: relationName,
                         relationType: relationSchema.type,
                         isLazy: relationSchema.lazy || false,
@@ -135,7 +187,6 @@ export class EntitySchemaTransformer {
                             onDelete: relationSchema.onDelete,
                             onUpdate: relationSchema.onUpdate,
                             deferrable: relationSchema.deferrable,
-                            primary: relationSchema.primary,
                             persistence: relationSchema.persistence
                         }
                     };
@@ -146,13 +197,13 @@ export class EntitySchemaTransformer {
                     if (relationSchema.joinColumn) {
                         if (typeof relationSchema.joinColumn === "boolean") {
                             const joinColumn: JoinColumnMetadataArgs = {
-                                target: options.target || options.name,
+                                target: options.target || optionsName,
                                 propertyName: relationName
                             };
                             metadataArgsStorage.joinColumns.push(joinColumn);
                         } else {
                             const joinColumn: JoinColumnMetadataArgs = {
-                                target: options.target || options.name,
+                                target: options.target || optionsName,
                                 propertyName: relationName,
                                 name: relationSchema.joinColumn.name,
                                 referencedColumnName: relationSchema.joinColumn.referencedColumnName
@@ -165,13 +216,13 @@ export class EntitySchemaTransformer {
                     if (relationSchema.joinTable) {
                         if (typeof relationSchema.joinTable === "boolean") {
                             const joinTable: JoinTableMetadataArgs = {
-                                target: options.target || options.name,
+                                target: options.target || optionsName,
                                 propertyName: relationName
                             };
                             metadataArgsStorage.joinTables.push(joinTable);
                         } else {
                             const joinTable: JoinTableMetadataArgs = {
-                                target: options.target || options.name,
+                                target: options.target || optionsName,
                                 propertyName: relationName,
                                 name: relationSchema.joinTable.name,
                                 database: relationSchema.joinTable.database,
@@ -189,7 +240,7 @@ export class EntitySchemaTransformer {
             if (options.indices) {
                 options.indices.forEach(index => {
                     const indexAgrs: IndexMetadataArgs = {
-                        target: options.target || options.name,
+                        target: options.target || optionsName,
                         name: index.name,
                         unique: index.unique === true ? true : false,
                         spatial: index.spatial === true ? true : false,
@@ -208,7 +259,7 @@ export class EntitySchemaTransformer {
             if (options.uniques) {
                 options.uniques.forEach(unique => {
                     const uniqueAgrs: UniqueMetadataArgs = {
-                        target: options.target || options.name,
+                        target: options.target || optionsName,
                         name: unique.name,
                         columns: unique.columns
                     };
@@ -220,7 +271,7 @@ export class EntitySchemaTransformer {
             if (options.checks) {
                 options.checks.forEach(check => {
                     const checkAgrs: CheckMetadataArgs = {
-                        target: options.target || options.name,
+                        target: options.target || optionsName,
                         name: check.name,
                         expression: check.expression
                     };
@@ -232,7 +283,7 @@ export class EntitySchemaTransformer {
             if (options.exclusions) {
                 options.exclusions.forEach(exclusion => {
                     const exclusionArgs: ExclusionMetadataArgs = {
-                        target: options.target || options.name,
+                        target: options.target || optionsName,
                         name: exclusion.name,
                         expression: exclusion.expression
                     };

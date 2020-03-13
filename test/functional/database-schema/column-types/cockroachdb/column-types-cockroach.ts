@@ -128,7 +128,7 @@ describe("database schema > column types > cockroachdb", () => {
         loadedPost.simpleArray[2].should.be.equal(post.simpleArray[2]);
         loadedPost.simpleJson.param.should.be.equal(post.simpleJson.param);
 
-        table!.findColumnByName("id")!.type.should.be.equal("int8");
+        table!.findColumnByName("id")!.type.should.be.equal("int4");
         table!.findColumnByName("name")!.type.should.be.equal("varchar");
         table!.findColumnByName("integer")!.type.should.be.equal("int8");
         table!.findColumnByName("int4")!.type.should.be.equal("int4");
@@ -207,7 +207,7 @@ describe("database schema > column types > cockroachdb", () => {
         loadedPost.charVarying.should.be.equal(post.charVarying);
         loadedPost.string.should.be.equal(post.string);
 
-        table!.findColumnByName("id")!.type.should.be.equal("int8");
+        table!.findColumnByName("id")!.type.should.be.equal("int4");
         table!.findColumnByName("numeric")!.type.should.be.equal("decimal");
         table!.findColumnByName("numeric")!.precision!.should.be.equal(5);
         table!.findColumnByName("numeric")!.scale!.should.be.equal(2);
@@ -253,7 +253,7 @@ describe("database schema > column types > cockroachdb", () => {
         loadedPost.boolean.should.be.equal(post.boolean);
         loadedPost.datetime.valueOf().should.be.equal(post.datetime.valueOf());
 
-        table!.findColumnByName("id")!.type.should.be.equal("int8");
+        table!.findColumnByName("id")!.type.should.be.equal("int4");
         table!.findColumnByName("name")!.type.should.be.equal("varchar");
         table!.findColumnByName("boolean")!.type.should.be.equal("bool");
         table!.findColumnByName("datetime")!.type.should.be.equal("timestamp");

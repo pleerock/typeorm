@@ -1,15 +1,12 @@
-import {Repository} from "../../../src/repository/Repository";
 import {Post} from "../entity/Post";
-import {EntityRepository} from "../../../src/decorator/EntityRepository";
+import {Sample33CustomRepositoryConnection} from "../connection";
 
-/**
- * Second type of custom repository - extends standard repository.
- */
-@EntityRepository(Post)
-export class PostRepository extends Repository<Post> {
+export const PostRepository = Sample33CustomRepositoryConnection
+    .getRepository(Post)
+    .extend({
 
-    findMyPost() {
-        return this.findOne();
-    }
+        findMyPost() {
+            return this.findOne();
+        }
 
-}
+    });

@@ -5,7 +5,7 @@ export const PersonSchema = new EntitySchema<any>({
     columns: {
         Id: {
             primary: true,
-            type: "int",
+            type: Number,
             generated: "increment"
         },
         FirstName: {

@@ -1,4 +1,5 @@
 import {CockroachDriver} from "../driver/cockroachdb/CockroachDriver";
+import {ObserverExecutor} from "../observer/ObserverExecutor";
 import {SapDriver} from "../driver/sap/SapDriver";
 import { ColumnMetadata } from "../metadata/ColumnMetadata";
 import {QueryBuilder} from "./QueryBuilder";
@@ -129,6 +130,14 @@ export class UpdateQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
             // close transaction if we started it
             if (transactionStartedByUs)
                 await queryRunner.commitTransaction();
+
+            // second case is when operation is executed without transaction and at the same time
+            // nobody started transaction from the above
+            if (this.expressionMap.callObservers) {
+                if (transactionStartedByUs || (this.expressionMap.useTransaction === false && queryRunner.isTransactionActive === false)) {
+                    await new ObserverExecutor(this.connection.observers).execute();
+                }
+            }
 
             return updateResult;
 
@@ -406,6 +415,14 @@ export class UpdateQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
                 columns.forEach(column => {
                     if (!column.isUpdate) { return; }
                     updatedColumns.push(column);
+
+                    // skip weird cases when we send wrong relations in update map
+                    if (column.relationMetadata &&
+                        (column.relationMetadata.isManyToMany || column.relationMetadata.isOneToMany))
+                        return;
+
+                    // skip generated columns updation since we can't update them - only database update them
+                    if (column.isGenerated) return;
 
                     const paramName = "upd_" + column.databaseName;
 

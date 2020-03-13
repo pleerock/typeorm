@@ -5,8 +5,7 @@ import {Role} from "./entity/Role";
 import {Event} from "./entity/Event";
 import {EventRole} from "./entity/EventRole";
 
-// todo: fix later (refactor persistence)
-describe.skip("github issues > #1926 Update fails for entity with compound relation-based primary key on OneToMany relationship", () => {
+describe("github issues > #1926 Update fails for entity with compound relation-based primary key on OneToMany relationship", () => {
     let connections: Connection[];
     before(async () => connections = await createTestingConnections({
         entities: [__dirname + "/entity/*{.js,.ts}"],

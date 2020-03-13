@@ -99,6 +99,7 @@ export class SubjectChangedColumnsComputer {
 
                         case "json":
                         case "jsonb":
+                        case "simple-json":
                             // JSON.stringify doesn't work because postgresql sorts jsonb before save.
                             // If you try to save json '[{"messages": "", "attribute Key": "", "level":""}] ' as jsonb,
                             // then postgresql will save it as '[{"level": "", "message":"", "attributeKey": ""}]'

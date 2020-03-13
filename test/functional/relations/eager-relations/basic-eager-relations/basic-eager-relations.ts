@@ -87,6 +87,8 @@ describe("relations > eager relations > basic", () => {
                 }
             },
             editors: [{
+                userId: 1,
+                postId: 1,
                 user: {
                     id: 1,
                     firstName: "Timber",
@@ -101,12 +103,13 @@ describe("relations > eager relations > basic", () => {
 
     })));
 
-    it("should not load eager relations when query builder is used", () => Promise.all(connections.map(async connection => {
+    it("should not load eager relations when query builder is used with disable-eager-relations flag", () => Promise.all(connections.map(async connection => {
         await prepareData(connection);
 
         const loadedPost = await connection.manager
             .createQueryBuilder(Post, "post")
             .where("post.id = :id", { id: 1 })
+            .disableEagerRelations()
             .getOne();
 
         loadedPost!.should.be.eql({

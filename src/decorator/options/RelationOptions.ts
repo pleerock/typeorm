@@ -37,12 +37,6 @@ export interface RelationOptions {
     deferrable?: DeferrableType;
 
     /**
-     * Indicates if this relation will be a primary key.
-     * Can be used only for many-to-one and owner one-to-one relations.
-     */
-    primary?: boolean;
-
-    /**
      * Set this relation to be lazy. Note: lazy relations are promises. When you call them they return promise
      * which resolve relation result then. If your property's type is Promise then this relation is set to lazy automatically.
      */

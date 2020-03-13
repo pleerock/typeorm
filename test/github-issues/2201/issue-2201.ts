@@ -24,7 +24,7 @@ describe("github issues > #2201 - Create a select query when using a (custom) ju
         await closeTestingConnections(connections);
     });
 
-    it.skip("Should not try to update the junction table when not needed", async () => {
+    it("Should not try to update the junction table when not needed", async () => {
         const connections = await createTestingConnections({
             entities: [__dirname + "/entity/ver2/*{.js,.ts}"],
             enabledDrivers: ["postgres"],

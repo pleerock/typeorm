@@ -7,7 +7,7 @@ import {PrimaryColumn} from "../../../../src/decorator/columns/PrimaryColumn";
 @TableInheritance({ column: { name: "type", type: "varchar" } })
 export class Person {
 
-    @PrimaryColumn("int")
+    @PrimaryColumn()
     id: number;
 
     @Column()

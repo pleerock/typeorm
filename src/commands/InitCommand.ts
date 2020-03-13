@@ -2,6 +2,7 @@ import {CommandUtils} from "./CommandUtils";
 import {ObjectLiteral} from "../common/ObjectLiteral";
 import * as path from "path";
 import * as yargs from "yargs";
+
 const chalk = require("chalk");
 
 /**

@@ -8,7 +8,7 @@ import {Generated} from "../../../../../src/decorator/Generated";
 @Entity()
 export class User {
 
-    @PrimaryColumn("int")
+    @PrimaryColumn()
     @Generated()
     primaryKey: number;
 

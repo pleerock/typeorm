@@ -48,12 +48,7 @@ describe.skip("repository > set/add/remove relation methods", function() {
 
         // load a post, want to have categories count
         const loadedPost = await postRepository.findOne(1, {
-            join: {
-                alias: "post",
-                leftJoinAndSelect: {
-                    manyCategories: "post.manyCategories"
-                }
-            }
+            relations: ["manyCategories"]
         });
 
         expect(loadedPost!).not.to.be.undefined;
@@ -88,11 +83,8 @@ describe.skip("repository > set/add/remove relation methods", function() {
 
         // load a post, want to have categories count
         const loadedCategory = await categoryRepository.findOne(1, {
-            join: {
-                alias: "category",
-                leftJoinAndSelect: { manyPosts: "category.manyPosts" } }
-            }
-        );
+            relations: ["manyPosts"]
+        });
 
         expect(loadedCategory).not.to.be.undefined;
         expect(loadedCategory!.manyPosts).not.to.be.undefined;
@@ -131,10 +123,7 @@ describe.skip("repository > set/add/remove relation methods", function() {
 
         // load a post, want to have categories count
         const loadedPost = await postRepository.findOne(1, {
-            join: {
-                alias: "post",
-                leftJoinAndSelect: { manyCategories: "post.manyCategories" }
-            }
+            relations: ["manyCategories"]
         });
 
         expect(loadedPost!).not.to.be.undefined;
@@ -175,10 +164,7 @@ describe.skip("repository > set/add/remove relation methods", function() {
 
         // load a post, want to have categories count
         const loadedCategory = await categoryRepository.findOne(1, {
-            join: {
-                alias: "category",
-                leftJoinAndSelect: { manyPosts: "category.manyPosts" }
-            }
+            relations: ["manyPosts"]
         });
 
         expect(loadedCategory!).not.to.be.undefined;
@@ -208,10 +194,7 @@ describe.skip("repository > set/add/remove relation methods", function() {
 
         // load a post, want to have categories count
         const loadedPost = await postRepository.findOne(1, {
-            join: {
-                alias: "post",
-                leftJoinAndSelect: { categories: "post.categories" }
-            }
+            relations: ["categories"]
         });
 
         expect(loadedPost!).not.to.be.undefined;
@@ -240,10 +223,7 @@ describe.skip("repository > set/add/remove relation methods", function() {
 
         // load a post, want to have categories count
         const loadedCategory = await categoryRepository.findOne(1, {
-            join: {
-                alias: "category",
-                leftJoinAndSelect: { post: "category.post" }
-            }
+            relations: ["post"]
         });
 
         expect(loadedCategory!).not.to.be.undefined;
@@ -270,11 +250,8 @@ describe.skip("repository > set/add/remove relation methods", function() {
         // await postSpecificRepository.setRelation(post => post.categories, newPost.id, null);
 
         // load a post, want to have categories count
-        const loadedPost = await postRepository.findOne(1, {
-            join: {
-                alias: "post",
-                leftJoinAndSelect: { categories: "post.categories" }
-            }
+        const loadedPost = await postRepository.findOne({
+            relations: ["categories"]
         });
 
         expect(loadedPost!).not.to.be.undefined;
@@ -302,10 +279,7 @@ describe.skip("repository > set/add/remove relation methods", function() {
 
         // load a post, want to have categories count
         const loadedCategory = await categoryRepository.findOne(1, {
-            join: {
-                alias: "category",
-                leftJoinAndSelect: { post: "category.post" }
-            }
+            relations: ["post"]
         });
 
         expect(loadedCategory).not.to.be.undefined;

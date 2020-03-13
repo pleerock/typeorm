@@ -194,8 +194,6 @@ describe("database schema > column types > postgres-enum", () => {
     it("should rename ENUM when column renamed and revert rename", () => Promise.all(connections.map(async connection => {
 
         const queryRunner = connection.createQueryRunner();
-        const currentSchemaQuery = await queryRunner.query(`SELECT * FROM current_schema()`);
-        const currentSchema = currentSchemaQuery[0]["current_schema"];
         const table = await queryRunner.getTable("post");
         const enumColumn = table!.findColumnByName("enum")!;
         const changedColumn = enumColumn.clone();
@@ -205,14 +203,14 @@ describe("database schema > column types > postgres-enum", () => {
 
         let result = await queryRunner.query(`SELECT "n"."nspname", "t"."typname" FROM "pg_type" "t" ` +
             `INNER JOIN "pg_namespace" "n" ON "n"."oid" = "t"."typnamespace" ` +
-            `WHERE "n"."nspname" = '${currentSchema}' AND "t"."typname" = 'post_enumerable_enum'`);
+            `WHERE "n"."nspname" = current_schema() AND "t"."typname" = 'post_enumerable_enum'`);
         result.length.should.be.equal(1);
 
         await queryRunner.executeMemoryDownSql();
 
         result = await queryRunner.query(`SELECT "n"."nspname", "t"."typname" FROM "pg_type" "t" ` +
             `INNER JOIN "pg_namespace" "n" ON "n"."oid" = "t"."typnamespace" ` +
-            `WHERE "n"."nspname" = '${currentSchema}' AND "t"."typname" = 'post_enum_enum'`);
+            `WHERE "n"."nspname" = current_schema() AND "t"."typname" = 'post_enum_enum'`);
         result.length.should.be.equal(1);
 
         await queryRunner.release();
@@ -221,22 +219,20 @@ describe("database schema > column types > postgres-enum", () => {
     it("should rename ENUM when table renamed and revert rename", () => Promise.all(connections.map(async connection => {
 
         const queryRunner = connection.createQueryRunner();
-        const currentSchemaQuery = await queryRunner.query(`SELECT * FROM current_schema()`);
-        const currentSchema = currentSchemaQuery[0]["current_schema"];
         const table = await queryRunner.getTable("post");
 
         await queryRunner.renameTable(table!, "question");
 
         let result = await queryRunner.query(`SELECT "n"."nspname", "t"."typname" FROM "pg_type" "t" ` +
             `INNER JOIN "pg_namespace" "n" ON "n"."oid" = "t"."typnamespace" ` +
-            `WHERE "n"."nspname" = '${currentSchema}' AND "t"."typname" = 'question_enum_enum'`);
+            `WHERE "n"."nspname" = current_schema() AND "t"."typname" = 'question_enum_enum'`);
         result.length.should.be.equal(1);
 
         await queryRunner.executeMemoryDownSql();
 
         result = await queryRunner.query(`SELECT "n"."nspname", "t"."typname" FROM "pg_type" "t" ` +
             `INNER JOIN "pg_namespace" "n" ON "n"."oid" = "t"."typnamespace" ` +
-            `WHERE "n"."nspname" = '${currentSchema}' AND "t"."typname" = 'post_enum_enum'`);
+            `WHERE "n"."nspname" = current_schema() AND "t"."typname" = 'post_enum_enum'`);
         result.length.should.be.equal(1);
 
         await queryRunner.release();

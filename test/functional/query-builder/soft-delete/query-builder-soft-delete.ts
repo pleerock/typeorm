@@ -35,7 +35,7 @@ describe("query builder > soft-delete", () => {
 
         const loadedUser1 = await connection.getRepository(User).findOne(
             { name: "Alex Messer" },
-            { withDeleted: true }
+            { options: { withDeleted: true } }
         );
         expect(loadedUser1).to.exist;
         expect(loadedUser1!.deletedAt).to.be.instanceof(Date);
@@ -83,7 +83,7 @@ describe("query builder > soft-delete", () => {
                 }
             })
             .execute();
-        
+
         const loadedPhoto1 = await connection.getRepository(Photo).findOne({ url: "1.jpg" });
         expect(loadedPhoto1).to.be.undefined;
 
@@ -149,7 +149,7 @@ describe("query builder > soft-delete", () => {
                 where: {
                     deletedAt: Not(IsNull())
                 },
-                withDeleted: true
+                options: { withDeleted: true }
             });
             expect(loadedUsers).to.exist;
             loadedUsers!.length.should.be.equal(limitNum);

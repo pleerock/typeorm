@@ -484,7 +484,7 @@ export class AuroraDataApiDriver implements Driver {
     /**
      * Creates a database type from a given column metadata.
      */
-    normalizeType(column: { type: ColumnType, length?: number|string, precision?: number|null, scale?: number }): string {
+    normalizeType(column: { type?: ColumnType|string, length?: number | string, precision?: number, scale?: number, isArray?: boolean }): string {
         if (column.type === Number || column.type === "integer") {
             return "int";
 

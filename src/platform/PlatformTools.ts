@@ -1,6 +1,7 @@
 import * as path from "path";
 import * as fs from "fs";
 import {highlight, Theme} from "cli-highlight";
+
 export {ReadStream} from "fs";
 export {EventEmitter} from "events";
 export {Readable, Writable} from "stream";

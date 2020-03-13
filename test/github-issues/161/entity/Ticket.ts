@@ -14,7 +14,7 @@ export class Ticket {
     @Column()
     name: string;
 
-    @OneToOne(type => Request, {
+    @OneToOne(type => Request, request => request.ticket, {
         cascade: true
     })
     @JoinColumn()

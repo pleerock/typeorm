@@ -2,7 +2,6 @@ import {CockroachDriver} from "../driver/cockroachdb/CockroachDriver";
 import {OracleDriver} from "../driver/oracle/OracleDriver";
 import {QueryBuilder} from "./QueryBuilder";
 import {ObjectLiteral} from "../common/ObjectLiteral";
-import {ObjectType} from "../common/ObjectType";
 import {Connection} from "../connection/Connection";
 import {QueryRunner} from "../query-runner/QueryRunner";
 import {SqlServerDriver} from "../driver/sqlserver/SqlServerDriver";
@@ -14,8 +13,9 @@ import {ReturningStatementNotSupportedError} from "../error/ReturningStatementNo
 import {SqljsDriver} from "../driver/sqljs/SqljsDriver";
 import {MysqlDriver} from "../driver/mysql/MysqlDriver";
 import {BroadcasterResult} from "../subscriber/BroadcasterResult";
-import {EntitySchema} from "../index";
+import {EntitySchema, EntityTarget} from "../index";
 import {AuroraDataApiDriver} from "../driver/aurora-data-api/AuroraDataApiDriver";
+import {ObserverExecutor} from "../observer/ObserverExecutor";
 
 /**
  * Allows to build complex sql queries in a fashion way and execute those queries.
@@ -77,8 +77,8 @@ export class DeleteQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
 
             } else if (driver instanceof SqlServerDriver || driver instanceof PostgresDriver || driver instanceof CockroachDriver) {
                 deleteResult.raw = result[0] ? result[0] : null;
-                // don't return 0 because it could confuse. null means that we did not receive this value
-                deleteResult.affected = typeof result[1] === "number" ? result[1] : null;
+                // don't return 0 because it could confuse. undefined means that we did not receive this value
+                deleteResult.affected = typeof result[1] === "number" ? result[1] : undefined;
 
             } else if (driver instanceof OracleDriver) {
                 deleteResult.affected = result;
@@ -97,6 +97,14 @@ export class DeleteQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
             // close transaction if we started it
             if (transactionStartedByUs)
                 await queryRunner.commitTransaction();
+
+            // second case is when operation is executed without transaction and at the same time
+            // nobody started transaction from the above
+            if (this.expressionMap.callObservers) {
+                if (transactionStartedByUs || (this.expressionMap.useTransaction === false && queryRunner.isTransactionActive === false)) {
+                    await new ObserverExecutor(this.connection.observers).execute();
+                }
+            }
 
             return deleteResult;
 
@@ -128,8 +136,8 @@ export class DeleteQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
      * Specifies FROM which entity's table select/update/delete will be executed.
      * Also sets a main string alias of the selection data.
      */
-    from<T>(entityTarget: ObjectType<T>|EntitySchema<T>|string, aliasName?: string): DeleteQueryBuilder<T> {
-        entityTarget = entityTarget instanceof EntitySchema ? entityTarget.options.name : entityTarget;
+    from<T>(entityTarget: EntityTarget<T>, aliasName?: string): DeleteQueryBuilder<T> {
+        entityTarget = entityTarget instanceof EntitySchema ? entityTarget.options.name!! : entityTarget;
         const mainAlias = this.createFromAlias(entityTarget, aliasName);
         this.expressionMap.setMainAlias(mainAlias);
         return (this as any) as DeleteQueryBuilder<T>;

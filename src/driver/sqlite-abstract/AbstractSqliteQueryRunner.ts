@@ -2,6 +2,7 @@ import {QueryRunner} from "../../query-runner/QueryRunner";
 import {ObjectLiteral} from "../../common/ObjectLiteral";
 import {TransactionAlreadyStartedError} from "../../error/TransactionAlreadyStartedError";
 import {TransactionNotStartedError} from "../../error/TransactionNotStartedError";
+import {NotImplementedError} from "../../error/NotImplementedError";
 import {TableColumn} from "../../schema-builder/table/TableColumn";
 import {ColumnMetadata} from "../../metadata/ColumnMetadata";
 import {Table} from "../../schema-builder/table/Table";
@@ -9,6 +10,7 @@ import {TableIndex} from "../../schema-builder/table/TableIndex";
 import {TableForeignKey} from "../../schema-builder/table/TableForeignKey";
 import {View} from "../../schema-builder/view/View";
 import {Query} from "../Query";
+import {SqliteConnectionOptions} from "../sqlite/SqliteConnectionOptions";
 import {AbstractSqliteDriver} from "./AbstractSqliteDriver";
 import {ReadStream} from "../../platform/PlatformTools";
 import {TableIndexOptions} from "../../schema-builder/options/TableIndexOptions";
@@ -67,8 +69,19 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
      * Starts transaction.
      */
     async startTransaction(isolationLevel?: IsolationLevel): Promise<void> {
-        if (this.isTransactionActive)
-            throw new TransactionAlreadyStartedError();
+        if (this.isTransactionActive) {
+            const options = this.driver.options as SqliteConnectionOptions;
+            if (options.busyErrorRetry && typeof options.busyErrorRetry === "number") {
+                return new Promise<void>((ok, fail) => {
+                    setTimeout(
+                        () => this.startTransaction(isolationLevel).then(ok).catch(fail),
+                        options.busyErrorRetry as number
+                    );
+                });
+            } else {
+                throw new TransactionAlreadyStartedError();
+            }
+        }
 
         this.isTransactionActive = true;
 
@@ -82,6 +95,10 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
             } else {
                 await this.query("PRAGMA read_uncommitted = false");
             }
+        }
+
+        if ((this.connection.options as SqliteConnectionOptions).enableWAL === true) {
+            await this.query("PRAGMA journal_mode = WAL");
         }
 
         await this.query("BEGIN TRANSACTION");
@@ -122,7 +139,7 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
      * Returns all available database names including system databases.
      */
     async getDatabases(): Promise<string[]> {
-        return Promise.resolve([]);
+        throw new NotImplementedError();
     }
 
     /**
@@ -130,14 +147,14 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
      * If database parameter specified, returns schemas of that database.
      */
     async getSchemas(database?: string): Promise<string[]> {
-        return Promise.resolve([]);
+        throw new NotImplementedError();
     }
 
     /**
      * Checks if database with the given name exist.
      */
     async hasDatabase(database: string): Promise<boolean> {
-        return Promise.resolve(false);
+        throw new NotImplementedError();
     }
 
     /**

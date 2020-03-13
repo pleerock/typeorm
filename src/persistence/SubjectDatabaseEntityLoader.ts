@@ -1,7 +1,7 @@
 import {Subject} from "./Subject";
 import {ObjectLiteral} from "../common/ObjectLiteral";
 import {QueryRunner} from "../query-runner/QueryRunner";
-import {FindManyOptions} from "../find-options/FindManyOptions";
+import {FindOptions} from "../find-options/FindOptions";
 
 /**
  * Loads database entities for all operate subjects which do not have database entity set.
@@ -34,6 +34,7 @@ export class SubjectDatabaseEntityLoader {
         // we are grouping subjects by target to perform more optimized queries using WHERE IN operator
         // go through the groups and perform loading of database entities of each subject in the group
         const promises = this.groupByEntityTargets().map(async subjectGroup => {
+            // console.time("start loading");
 
             // prepare entity ids of the subjects we need to load
             const allIds: ObjectLiteral[] = [];
@@ -79,20 +80,26 @@ export class SubjectDatabaseEntityLoader {
                 loadRelationPropertyPaths.push(...subjectGroup.subjects[0].metadata.manyToManyRelations.map(relation => relation.propertyPath));
             }
 
-            const findOptions: FindManyOptions<any> = {
-                loadEagerRelations: false,
-                loadRelationIds: {
-                    relations: loadRelationPropertyPaths,
-                    disableMixedMap: true
-                },
-                // the soft-deleted entities should be included in the loaded entities for recover operation
-                withDeleted: true
+            const findOptions: FindOptions<any> = {
+                options: {
+                    listeners: false,
+                    observers: false,
+                    eagerRelations: false,
+                    loadRelationIds: {
+                        relations: loadRelationPropertyPaths,
+                        disableMixedMap: true
+                    },
+                    // the soft-deleted entities should be included in the loaded entities for recover operation
+                    withDeleted: true
+                }
             };
 
             // load database entities for all given ids
+            // console.time("loading findByIds");
             const entities = await this.queryRunner.manager
                 .getRepository<ObjectLiteral>(subjectGroup.target)
                 .findByIds(allIds, findOptions);
+            // console.timeEnd("loading findByIds");
 
             // now when we have entities we need to find subject of each entity
             // and insert that entity into database entity of the found subjects
@@ -109,6 +116,8 @@ export class SubjectDatabaseEntityLoader {
             for (let subject of allSubjects) {
                 subject.databaseEntityLoaded = true;
             }
+
+            // console.timeEnd("start loading");
         });
 
         await Promise.all(promises);

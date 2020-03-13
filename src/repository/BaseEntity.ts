@@ -1,19 +1,18 @@
 import {Repository} from "./Repository";
-import {FindConditions, getConnection} from "../index";
+import {FindOptions, FindOptionsWhere, getConnection} from "../index";
 import {DeepPartial} from "../common/DeepPartial";
-import {SaveOptions} from "./SaveOptions";
-import {FindOneOptions} from "../find-options/FindOneOptions";
-import {RemoveOptions} from "./RemoveOptions";
-import {FindManyOptions} from "../find-options/FindManyOptions";
-import {Connection} from "../connection/Connection";
 import {ObjectType} from "../common/ObjectType";
-import {SelectQueryBuilder} from "../query-builder/SelectQueryBuilder";
+import {Connection} from "../connection/Connection";
+import {ObjectID} from "../driver/mongodb/typings";
+import {DeleteResult} from "../query-builder/result/DeleteResult";
 import {InsertResult} from "../query-builder/result/InsertResult";
 import {UpdateResult} from "../query-builder/result/UpdateResult";
-import {DeleteResult} from "../query-builder/result/DeleteResult";
-import {ObjectID} from "../driver/mongodb/typings";
+import {SelectQueryBuilder} from "../query-builder/SelectQueryBuilder";
+import {RemoveOptions} from "./RemoveOptions";
+import {SaveOptions} from "./SaveOptions";
 import {ObjectUtils} from "../util/ObjectUtils";
 import {QueryDeepPartialEntity} from "../query-builder/QueryPartialEntity";
+import * as Observable from "zen-observable";
 
 /**
  * Base abstract entity for all entities, used in ActiveRecord patterns.
@@ -213,7 +212,7 @@ export class BaseEntity {
      * Executes fast and efficient UPDATE query.
      * Does not check if entity exist in the database.
      */
-    static update<T extends BaseEntity>(this: ObjectType<T>, criteria: string|string[]|number|number[]|Date|Date[]|ObjectID|ObjectID[]|FindConditions<T>, partialEntity: QueryDeepPartialEntity<T>, options?: SaveOptions): Promise<UpdateResult> {
+    static update<T extends BaseEntity>(this: ObjectType<T>, criteria: string|string[]|number|number[]|Date|Date[]|ObjectID|ObjectID[]|FindOptionsWhere<T>, partialEntity: QueryDeepPartialEntity<T>, options?: SaveOptions): Promise<UpdateResult> {
         return (this as any).getRepository().update(criteria, partialEntity, options);
     }
 
@@ -223,41 +222,41 @@ export class BaseEntity {
      * Executes fast and efficient DELETE query.
      * Does not check if entity exist in the database.
      */
-    static delete<T extends BaseEntity>(this: ObjectType<T>, criteria: string|string[]|number|number[]|Date|Date[]|ObjectID|ObjectID[]|FindConditions<T>, options?: RemoveOptions): Promise<DeleteResult> {
+    static delete<T extends BaseEntity>(this: ObjectType<T>, criteria: string|string[]|number|number[]|Date|Date[]|ObjectID|ObjectID[]|FindOptionsWhere<T>, options?: RemoveOptions): Promise<DeleteResult> {
         return (this as any).getRepository().delete(criteria, options);
     }
 
     /**
      * Counts entities that match given options.
      */
-    static count<T extends BaseEntity>(this: ObjectType<T>, options?: FindManyOptions<T>): Promise<number>;
+    static count<T extends BaseEntity>(this: ObjectType<T>, options?: FindOptionsWhere<T>): Promise<number>;
 
     /**
      * Counts entities that match given conditions.
      */
-    static count<T extends BaseEntity>(this: ObjectType<T>, conditions?: FindConditions<T>): Promise<number>;
+    static count<T extends BaseEntity>(this: ObjectType<T>, conditions?: FindOptions<T>): Promise<number>;
 
     /**
      * Counts entities that match given find options or conditions.
      */
-    static count<T extends BaseEntity>(this: ObjectType<T>, optionsOrConditions?: FindManyOptions<T>|FindConditions<T>): Promise<number> {
+    static count<T extends BaseEntity>(this: ObjectType<T>, optionsOrConditions?: FindOptions<T>|FindOptionsWhere<T>): Promise<number> {
         return (this as any).getRepository().count(optionsOrConditions as any);
     }
 
     /**
      * Finds entities that match given options.
      */
-    static find<T extends BaseEntity>(this: ObjectType<T>, options?: FindManyOptions<T>): Promise<T[]>;
+    static find<T extends BaseEntity>(this: ObjectType<T>, options?: FindOptions<T>): Promise<T[]>;
 
     /**
      * Finds entities that match given conditions.
      */
-    static find<T extends BaseEntity>(this: ObjectType<T>, conditions?: FindConditions<T>): Promise<T[]>;
+    static find<T extends BaseEntity>(this: ObjectType<T>, conditions?: FindOptionsWhere<T>): Promise<T[]>;
 
     /**
      * Finds entities that match given find options or conditions.
      */
-    static find<T extends BaseEntity>(this: ObjectType<T>, optionsOrConditions?: FindManyOptions<T>|FindConditions<T>): Promise<T[]> {
+    static find<T extends BaseEntity>(this: ObjectType<T>, optionsOrConditions?: FindOptions<T>|FindOptionsWhere<T>): Promise<T[]> {
         return (this as any).getRepository().find(optionsOrConditions as any);
     }
 
@@ -266,21 +265,21 @@ export class BaseEntity {
      * Also counts all entities that match given conditions,
      * but ignores pagination settings (from and take options).
      */
-    static findAndCount<T extends BaseEntity>(this: ObjectType<T>, options?: FindManyOptions<T>): Promise<[ T[], number ]>;
+    static findAndCount<T extends BaseEntity>(this: ObjectType<T>, options?: FindOptions<T>): Promise<[ T[], number ]>;
 
     /**
      * Finds entities that match given conditions.
      * Also counts all entities that match given conditions,
      * but ignores pagination settings (from and take options).
      */
-    static findAndCount<T extends BaseEntity>(this: ObjectType<T>, conditions?: FindConditions<T>): Promise<[ T[], number ]>;
+    static findAndCount<T extends BaseEntity>(this: ObjectType<T>, conditions?: FindOptionsWhere<T>): Promise<[ T[], number ]>;
 
     /**
      * Finds entities that match given find options or conditions.
      * Also counts all entities that match given conditions,
      * but ignores pagination settings (from and take options).
      */
-    static findAndCount<T extends BaseEntity>(this: ObjectType<T>, optionsOrConditions?: FindManyOptions<T>|FindConditions<T>): Promise<[ T[], number ]> {
+    static findAndCount<T extends BaseEntity>(this: ObjectType<T>, optionsOrConditions?: FindOptions<T>|FindOptionsWhere<T>): Promise<[ T[], number ]> {
         return (this as any).getRepository().findAndCount(optionsOrConditions as any);
     }
 
@@ -288,64 +287,144 @@ export class BaseEntity {
      * Finds entities by ids.
      * Optionally find options can be applied.
      */
-    static findByIds<T extends BaseEntity>(this: ObjectType<T>, ids: any[], options?: FindManyOptions<T>): Promise<T[]>;
+    static findByIds<T extends BaseEntity>(this: ObjectType<T>, ids: any[], options?: FindOptions<T>): Promise<T[]>;
 
     /**
      * Finds entities by ids.
      * Optionally conditions can be applied.
      */
-    static findByIds<T extends BaseEntity>(this: ObjectType<T>, ids: any[], conditions?: FindConditions<T>): Promise<T[]>;
+    static findByIds<T extends BaseEntity>(this: ObjectType<T>, ids: any[], conditions?: FindOptionsWhere<T>): Promise<T[]>;
 
     /**
      * Finds entities by ids.
      * Optionally find options can be applied.
      */
-    static findByIds<T extends BaseEntity>(this: ObjectType<T>, ids: any[], optionsOrConditions?: FindManyOptions<T>|FindConditions<T>): Promise<T[]> {
+    static findByIds<T extends BaseEntity>(this: ObjectType<T>, ids: any[], optionsOrConditions?: FindOptions<T>|FindOptionsWhere<T>): Promise<T[]> {
         return (this as any).getRepository().findByIds(ids, optionsOrConditions as any);
     }
 
     /**
      * Finds first entity that matches given options.
      */
-    static findOne<T extends BaseEntity>(this: ObjectType<T>, id?: string|number|Date|ObjectID, options?: FindOneOptions<T>): Promise<T|undefined>;
+    static findOne<T extends BaseEntity>(this: ObjectType<T>, id?: string|number|Date|ObjectID, options?: FindOptions<T>): Promise<T|undefined>;
 
     /**
      * Finds first entity that matches given options.
      */
-    static findOne<T extends BaseEntity>(this: ObjectType<T>, options?: FindOneOptions<T>): Promise<T|undefined>;
+    static findOne<T extends BaseEntity>(this: ObjectType<T>, options?: FindOptions<T>): Promise<T|undefined>;
 
     /**
      * Finds first entity that matches given conditions.
      */
-    static findOne<T extends BaseEntity>(this: ObjectType<T>, conditions?: FindConditions<T>, options?: FindOneOptions<T>): Promise<T|undefined>;
+    static findOne<T extends BaseEntity>(this: ObjectType<T>, conditions?: FindOptionsWhere<T>, options?: FindOptions<T>): Promise<T|undefined>;
 
     /**
      * Finds first entity that matches given conditions.
      */
-    static findOne<T extends BaseEntity>(this: ObjectType<T>, optionsOrConditions?: string|number|Date|ObjectID|FindOneOptions<T>|FindConditions<T>, maybeOptions?: FindOneOptions<T>): Promise<T|undefined> {
+    static findOne<T extends BaseEntity>(this: ObjectType<T>, optionsOrConditions?: string|number|Date|ObjectID|FindOptions<T>|FindOptionsWhere<T>, maybeOptions?: FindOptions<T>): Promise<T|undefined> {
         return (this as any).getRepository().findOne(optionsOrConditions as any, maybeOptions);
     }
 
     /**
      * Finds first entity that matches given options.
      */
-    static findOneOrFail<T extends BaseEntity>(this: ObjectType<T>, id?: string|number|Date|ObjectID, options?: FindOneOptions<T>): Promise<T>;
+    static findOneOrFail<T extends BaseEntity>(this: ObjectType<T>, id?: string|number|Date|ObjectID, options?: FindOptions<T>): Promise<T>;
 
     /**
      * Finds first entity that matches given options.
      */
-    static findOneOrFail<T extends BaseEntity>(this: ObjectType<T>, options?: FindOneOptions<T>): Promise<T>;
+    static findOneOrFail<T extends BaseEntity>(this: ObjectType<T>, options?: FindOptions<T>): Promise<T>;
 
     /**
      * Finds first entity that matches given conditions.
      */
-    static findOneOrFail<T extends BaseEntity>(this: ObjectType<T>, conditions?: FindConditions<T>, options?: FindOneOptions<T>): Promise<T>;
+    static findOneOrFail<T extends BaseEntity>(this: ObjectType<T>, conditions?: FindOptionsWhere<T>, options?: FindOptions<T>): Promise<T>;
 
     /**
      * Finds first entity that matches given conditions.
      */
-    static findOneOrFail<T extends BaseEntity>(this: ObjectType<T>, optionsOrConditions?: string|number|Date|ObjectID|FindOneOptions<T>|FindConditions<T>, maybeOptions?: FindOneOptions<T>): Promise<T> {
+    static findOneOrFail<T extends BaseEntity>(this: ObjectType<T>, optionsOrConditions?: string|number|Date|ObjectID|FindOptions<T>|FindOptionsWhere<T>, maybeOptions?: FindOptions<T>): Promise<T> {
         return (this as any).getRepository().findOneOrFail(optionsOrConditions as any, maybeOptions);
+    }
+
+    /**
+     * Finds entities that match given options and returns observable.
+     * Whenever new data appears that matches given query observable emits new value.
+     */
+    static observe<Entity>(options?: FindOptions<Entity>): Observable<Entity[]>;
+
+    /**
+     * Finds entities that match given conditions and returns observable.
+     * Whenever new data appears that matches given query observable emits new value.
+     */
+    static observe<Entity>(conditions?: FindOptionsWhere<Entity>): Observable<Entity[]>;
+
+    /**
+     * Finds entities that match given options and returns observable.
+     * Whenever new data appears that matches given query observable emits new value.
+     */
+    static observe<Entity>(optionsOrConditions?: FindOptions<Entity>|FindOptionsWhere<Entity>): Observable<Entity[]> {
+        return (this as any).getRepository().observe(optionsOrConditions as any);
+    }
+
+    /**
+     * Finds entities and count that match given options and returns observable.
+     * Whenever new data appears that matches given query observable emits new value.
+     */
+    static observeManyAndCount<Entity>(options?: FindOptions<Entity>): Observable<[Entity[], number]>;
+
+    /**
+     * Finds entities and count that match given conditions and returns observable.
+     * Whenever new data appears that matches given query observable emits new value.
+     */
+    static observeManyAndCount<Entity>(conditions?: FindOptionsWhere<Entity>): Observable<[Entity[], number]>;
+
+    /**
+     * Finds entities and count that match given options and returns observable.
+     * Whenever new data appears that matches given query observable emits new value.
+     */
+    static observeManyAndCount<Entity>(optionsOrConditions?: FindOptions<Entity>|FindOptionsWhere<Entity>): Observable<[Entity[], number]> {
+        return (this as any).getRepository().observeManyAndCount(optionsOrConditions as any);
+    }
+
+    /**
+     * Finds entity that match given options and returns observable.
+     * Whenever new data appears that matches given query observable emits new value.
+     */
+    static observeOne<Entity>(options?: FindOptions<Entity>): Observable<Entity>;
+
+    /**
+     * Finds entity that match given conditions and returns observable.
+     * Whenever new data appears that matches given query observable emits new value.
+     */
+    static observeOne<Entity>(conditions?: FindOptionsWhere<Entity>): Observable<Entity>;
+
+    /**
+     * Finds entity that match given options and returns observable.
+     * Whenever new data appears that matches given query observable emits new value.
+     */
+    static observeOne<Entity>(optionsOrConditions?: FindOptions<Entity>|FindOptionsWhere<Entity>): Observable<Entity> {
+        return (this as any).getRepository().observeOne(optionsOrConditions as any);
+    }
+
+    /**
+     * Gets the entities count match given options and returns observable.
+     * Whenever new data appears that matches given query observable emits new value.
+     */
+    static observeCount<Entity>(options?: FindOptions<Entity>): Observable<number>;
+
+    /**
+     * Gets the entities count match given options and returns observable.
+     * Whenever new data appears that matches given query observable emits new value.
+     */
+    static observeCount<Entity>(conditions?: FindOptionsWhere<Entity>): Observable<number>;
+
+    /**
+     * Gets the entities count match given options and returns observable.
+     * Whenever new data appears that matches given query observable emits new value.
+     */
+    static observeCount<Entity>(optionsOrConditions?: FindOptions<Entity>|FindOptionsWhere<Entity>): Observable<number> {
+        return (this as any).getRepository().observeCount(optionsOrConditions as any);
     }
 
     /**

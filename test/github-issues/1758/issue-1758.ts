@@ -10,8 +10,9 @@ describe("github issues > #1758 Synchronization bug in PostgreSQL bug occurs whe
             entities: [__dirname + "/entity/*{.js,.ts}"],
             enabledDrivers: ["postgres"],
             schema: "public",
-            schemaCreate: true,
-            dropSchema: true,
+        }).then(async connections => {
+            await Promise.all(connections.map(connection => connection.synchronize(true)));
+            return connections;
         });
     });
     after(() => closeTestingConnections(connections));

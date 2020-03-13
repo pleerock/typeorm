@@ -31,7 +31,7 @@ describe("github issues > #2103 query builder regression", () => {
 
         const entities = await repository.createQueryBuilder("s")
             .whereInIds(ids)
-            .andWhere("s.x = 1")
+            .andWhere(`s.${connection.driver.escape("x")} = 1`)
             .getMany();
 
         entities.map(entity => entity.id).should.be.eql(
@@ -60,7 +60,7 @@ describe("github issues > #2103 query builder regression", () => {
             .whereInIds(ids.map(id => {
                 return { id, code: 1 };
             }))
-            .andWhere("s.x = 1")
+            .andWhere(`s.${connection.driver.escape("x")} = 1`)
             .getMany();
 
         entities.map(entity => entity.id).should.be.eql(

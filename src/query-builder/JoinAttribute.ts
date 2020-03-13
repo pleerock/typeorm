@@ -208,14 +208,14 @@ export class JoinAttribute {
         if (!this.mapToProperty)
             return undefined;
 
-        return this.mapToProperty!.split(".")[0];
+        return QueryBuilderUtils.extractAliasAndPropertyPath(this.mapToProperty!)[0];
     }
 
     get mapToPropertyPropertyName(): string|undefined {
         if (!this.mapToProperty)
             return undefined;
 
-        return this.mapToProperty!.split(".")[1];
+        return QueryBuilderUtils.extractAliasAndPropertyPath(this.mapToProperty!)[1];
     }
 
 }

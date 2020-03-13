@@ -22,6 +22,11 @@ describe("github issues > #3363 Isolation Level in transaction() from Connection
         if (connection.driver instanceof SapDriver || connection.driver instanceof OracleDriver)
             return;
 
+        // Oracle doesn't support that transaction isolation level.
+        if (connection.driver instanceof OracleDriver) {
+            return;
+        }
+
         let postId: number|undefined = undefined, categoryId: number|undefined = undefined;
 
         await connection.transaction("READ UNCOMMITTED", async transaction => {

@@ -4,7 +4,7 @@ import {Connection} from "../../../src/connection/Connection";
 import {expect} from "chai";
 import {Post} from "./entity/Post";
 
-describe("github issues > #1245 `findByIds` ignores `FindManyOptions`", () => {
+describe("github issues > #1245 `findByIds` ignores `FindOptions`", () => {
 
     let connections: Connection[];
     before(async () => connections = await createTestingConnections({

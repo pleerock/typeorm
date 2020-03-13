@@ -1,9 +1,9 @@
+import { createLiteralEntityManager } from "../../../src/entity-manager/LiteralEntityManager";
 import { closeTestingConnections, createTestingConnections, reloadTestingDatabases } from "../../utils/test-utils";
 import { Connection } from "../../../src/connection/Connection";
 import { Human } from "./entity/Human";
 import { Animal } from "./entity/Animal";
 import { Gender } from "./entity/GenderEnum";
-import { EntityManager } from "../../../src/entity-manager/EntityManager";
 import { expect } from "chai";
 
 describe("github issues > #4106 Specify enum type name in postgres", () => {
@@ -37,7 +37,7 @@ describe("github issues > #4106 Specify enum type name in postgres", () => {
     it("should create an enum with the name specified in column options -> enumName", () =>
         Promise.all(
             connections.map(async connection => {
-                const em = new EntityManager(connection);
+                const em = createLiteralEntityManager({ connection });
                 const types = await em.query(`SELECT typowner, n.nspname as "schema",
                     pg_catalog.format_type(t.oid, NULL) AS "name",
                     pg_catalog.obj_description(t.oid, 'pg_type') as "description"
@@ -60,7 +60,7 @@ describe("github issues > #4106 Specify enum type name in postgres", () => {
             connections.map(async connection => {
                 await prepareData(connection);
 
-                const em = new EntityManager(connection);
+                const em = createLiteralEntityManager({ connection });
 
                 const humanTable = await em.query(`SELECT column_name as "columnName", data_type as "dataType", udt_name as "udtName" FROM information_schema.columns
                     WHERE table_schema = 'public' AND table_name = 'human'

@@ -8,8 +8,8 @@ import {SqlServerDriver} from "../driver/sqlserver/SqlServerDriver";
 import {MssqlParameter} from "../driver/sqlserver/MssqlParameter";
 import {SqlServerConnectionOptions} from "../driver/sqlserver/SqlServerConnectionOptions";
 import {PostgresConnectionOptions} from "../driver/postgres/PostgresConnectionOptions";
-import { MongoDriver } from "../driver/mongodb/MongoDriver";
-import { MongoQueryRunner } from "../driver/mongodb/MongoQueryRunner";
+import {MongoDriver} from "../driver/mongodb/MongoDriver";
+import {MongoQueryRunner} from "../driver/mongodb/MongoQueryRunner";
 
 /**
  * Executes migrations: runs pending and reverts previously executed migrations.

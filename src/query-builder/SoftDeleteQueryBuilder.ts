@@ -143,7 +143,7 @@ export class SoftDeleteQueryBuilder<Entity> extends QueryBuilder<Entity> impleme
      * Also sets a main string alias of the selection data.
      */
     from<T>(entityTarget: ObjectType<T>|EntitySchema<T>|string, aliasName?: string): SoftDeleteQueryBuilder<T> {
-        entityTarget = entityTarget instanceof EntitySchema ? entityTarget.options.name : entityTarget;
+        entityTarget = entityTarget instanceof EntitySchema ? entityTarget.options.name! : entityTarget;
         const mainAlias = this.createFromAlias(entityTarget, aliasName);
         this.expressionMap.setMainAlias(mainAlias);
         return (this as any) as SoftDeleteQueryBuilder<T>;

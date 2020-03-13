@@ -66,7 +66,7 @@ export class ReturningResultsEntityUpdator {
                         .from(metadata.target, metadata.targetName)
                         .where(entityId)
                         .setOption("create-pojo") // use POJO because created object can contain default values, e.g. property = null and those properties maight be overridden by merge process
-                        .getOne();
+                        .getOne() as any;
 
                     if (loadedReturningColumns) {
                         this.queryRunner.manager.merge(metadata.target as any, entity, loadedReturningColumns);

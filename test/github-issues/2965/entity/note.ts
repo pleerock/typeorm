@@ -9,6 +9,6 @@ export class Note {
     @Column()
     public label: string;
 
-    @ManyToOne(type => Person, { lazy: true })
+    @ManyToOne(type => Person, owner => owner.notes, { lazy: true })
     public owner: Promise<Person> | Person;
 }

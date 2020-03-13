@@ -98,7 +98,9 @@ describe("schema builder > custom-db-and-schema-sync", () => {
         await queryRunner.dropTable(albumMetadata.tablePath, true, false);
 
         // drop created database
-        await queryRunner.dropDatabase("secondDB", true);
+        if (!(connection.driver instanceof PostgresDriver)) {
+            await queryRunner.dropDatabase("secondDB", true);
+        }
 
         await queryRunner.release();
 

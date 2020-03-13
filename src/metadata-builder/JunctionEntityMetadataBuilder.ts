@@ -6,7 +6,7 @@ import {ForeignKeyMetadata} from "../metadata/ForeignKeyMetadata";
 import {IndexMetadata} from "../metadata/IndexMetadata";
 import {JoinTableMetadataArgs} from "../metadata-args/JoinTableMetadataArgs";
 import {RelationMetadata} from "../metadata/RelationMetadata";
-import {AuroraDataApiDriver} from "../driver/aurora-data-api/AuroraDataApiDriver";
+import { AuroraDataApiDriver } from "../driver/aurora-data-api/AuroraDataApiDriver";
 
 /**
  * Creates EntityMetadata for junction tables.

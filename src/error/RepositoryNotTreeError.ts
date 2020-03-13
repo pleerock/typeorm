@@ -11,7 +11,7 @@ export class RepositoryNotTreeError extends Error {
         Object.setPrototypeOf(this, RepositoryNotTreeError.prototype);
         let targetName: string;
         if (target instanceof EntitySchema) {
-            targetName = target.options.name;
+            targetName = target.options.name || "";
         } else if (typeof target === "function") {
             targetName = target.name;
         } else {

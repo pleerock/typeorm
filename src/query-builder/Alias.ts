@@ -1,5 +1,5 @@
 import {EntityMetadata} from "../metadata/EntityMetadata";
-import { ObjectUtils } from "../util/ObjectUtils";
+import {ObjectUtils} from "../util/ObjectUtils";
 
 /**
  */

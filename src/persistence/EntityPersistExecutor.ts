@@ -1,4 +1,5 @@
 import {ObjectLiteral} from "../common/ObjectLiteral";
+import {ObserverExecutor} from "../observer/ObserverExecutor";
 import {SaveOptions} from "../repository/SaveOptions";
 import {RemoveOptions} from "../repository/RemoveOptions";
 import {MustBeEntityError} from "../error/MustBeEntityError";
@@ -63,6 +64,7 @@ export class EntityPersistExecutor {
                 const entities: ObjectLiteral[] = Array.isArray(this.entity) ? this.entity : [this.entity];
                 const entitiesInChunks = this.options && this.options.chunk && this.options.chunk > 0 ? OrmUtils.chunk(entities, this.options.chunk) : [entities];
 
+                // console.log("entitiesInChunks", entitiesInChunks);
                 // console.time("building subject executors...");
                 const executors = await Promise.all(entitiesInChunks.map(async entities => {
                     const subjects: Subject[] = [];
@@ -149,8 +151,17 @@ export class EntityPersistExecutor {
 
                     // commit transaction if it was started by us
                     // console.time("commit");
-                    if (isTransactionStartedByUs === true)
+                    // console.log("committing");
+                    if (isTransactionStartedByUs === true) {
+                        // console.log("committing oh yeah");
                         await queryRunner.commitTransaction();
+
+                        // console.log("dispatching", this.connection.observers);
+                        // console.time("dispatching");
+                        await new ObserverExecutor(this.connection.observers).execute();
+                        // console.timeEnd("dispatching");
+                        // console.log("dispatched");
+                    }
                     // console.timeEnd("commit");
 
                 } catch (error) {

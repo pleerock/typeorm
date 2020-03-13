@@ -174,15 +174,15 @@ export class CockroachDriver implements Driver {
         updateDateDefault: "now()",
         deleteDate: "timestamptz",
         deleteDateNullable: true,
-        version: Number,
-        treeLevel: Number,
-        migrationId: Number,
+        version: "int4",
+        treeLevel: "int4",
+        migrationId: "int4",
         migrationName: "varchar",
         migrationTimestamp: "int8",
-        cacheId: Number,
+        cacheId: "int4",
         cacheIdentifier: "varchar",
         cacheTime: "int8",
-        cacheDuration: Number,
+        cacheDuration: "int4",
         cacheQuery: "string",
         cacheResult: "string",
         metadataType: "varchar",
@@ -337,11 +337,10 @@ export class CockroachDriver implements Driver {
             return columnMetadata.transformer ? ApplyValueTransformers.transformFrom(columnMetadata.transformer, value) : value;
 
         // unique_rowid() generates bigint value and should not be converted to number
-        if (([Number, "int4", "smallint", "int2"].some(v => v === columnMetadata.type)
-            && !columnMetadata.isArray) || columnMetadata.generationStrategy === "increment") {
+        /*if ((columnMetadata.type === Number && !columnMetadata.isArray) || columnMetadata.generationStrategy === "increment") {
             value = parseInt(value);
 
-        } else if (columnMetadata.type === Boolean) {
+        } else */if (columnMetadata.type === Boolean) {
             value = value ? true : false;
 
         } else if (columnMetadata.type === "datetime"
@@ -427,8 +426,11 @@ export class CockroachDriver implements Driver {
     /**
      * Creates a database type from a given column metadata.
      */
-    normalizeType(column: { type?: ColumnType, length?: number | string, precision?: number|null, scale?: number, isArray?: boolean, isGenerated?: boolean, generationStrategy?: "increment"|"uuid"|"rowid" }): string {
-        if (column.type === Number || column.type === "integer" || column.type === "int" || column.type === "bigint" || column.type === "int64") {
+    normalizeType(column: { type?: ColumnType, length?: number | string, precision?: number, scale?: number, isArray?: boolean, isGenerated?: boolean, generationStrategy?: "increment"|"uuid"|"rowid" }): string {
+        if (column.type === Number) {
+            return "int4";
+
+        } else if (column.type === "integer" || column.type === "int" || column.type === "bigint" || column.type === "int64") {
             return "int8";
 
         } else if (column.type === String || column.type === "character varying" || column.type === "char varying") {

@@ -1,7 +1,6 @@
 import "reflect-metadata";
-import {CockroachDriver} from "../../../../src/driver/cockroachdb/CockroachDriver";
 import {closeTestingConnections, createTestingConnections, reloadTestingDatabases} from "../../../utils/test-utils";
-import {Connection} from "../../../../src/connection/Connection";
+import {Connection} from "../../../../src";
 import {User} from "./entity/User";
 import {Post} from "./entity/Post";
 import {Category} from "./entity/Category";
@@ -265,21 +264,11 @@ describe("query builder > sub-query", () => {
             .orderBy("post.id")
             .getRawMany();
 
-        // CockroachDB returns numeric data types as string
-        if (connection.driver instanceof CockroachDriver) {
-            posts.should.be.eql([
-                { id: "1", name: "Alex Messer" },
-                { id: "2", name: "Alex Messer" },
-                { id: "3", name: "Alex Messer" },
-            ]);
-
-        } else {
-            posts.should.be.eql([
-                { id: 1, name: "Alex Messer" },
-                { id: 2, name: "Alex Messer" },
-                { id: 3, name: "Alex Messer" },
-            ]);
-        }
+        posts.should.be.eql([
+            { id: 1, name: "Alex Messer" },
+            { id: 2, name: "Alex Messer" },
+            { id: 3, name: "Alex Messer" },
+        ]);
     })));
 
     it("should execute sub query in selects (using provided sub query builder)", () => Promise.all(connections.map(async connection => {
@@ -299,21 +288,11 @@ describe("query builder > sub-query", () => {
             .orderBy("post.id")
             .getRawMany();
 
-        // CockroachDB returns numeric data types as string
-        if (connection.driver instanceof CockroachDriver) {
-            posts.should.be.eql([
-                { id: "1", name: "Alex Messer" },
-                { id: "2", name: "Alex Messer" },
-                { id: "3", name: "Alex Messer" },
-            ]);
-
-        } else {
-            posts.should.be.eql([
-                { id: 1, name: "Alex Messer" },
-                { id: 2, name: "Alex Messer" },
-                { id: 3, name: "Alex Messer" },
-            ]);
-        }
+        posts.should.be.eql([
+            { id: 1, name: "Alex Messer" },
+            { id: 2, name: "Alex Messer" },
+            { id: 3, name: "Alex Messer" },
+        ]);
     })));
 
     it("should execute sub query in joins (using provided sub query builder)", () => Promise.all(connections.map(async connection => {

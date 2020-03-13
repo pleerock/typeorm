@@ -1,6 +1,5 @@
 import {expect} from "chai";
 import "reflect-metadata";
-import {CockroachDriver} from "../../../../src/driver/cockroachdb/CockroachDriver";
 import {Category} from "./entity/Category";
 import {Connection} from "../../../../src";
 import {closeTestingConnections, createTestingConnections, reloadTestingDatabases} from "../../../utils/test-utils";
@@ -49,13 +48,11 @@ describe("view entity > sqlite", () => {
         const postCategories = await connection.manager.find(PostCategory);
         postCategories.length.should.be.equal(2);
 
-        const postId1 = connection.driver instanceof CockroachDriver ? "1" : 1;
-        postCategories[0].id.should.be.equal(postId1);
+        postCategories[0].id.should.be.equal(1);
         postCategories[0].name.should.be.equal("About BMW");
         postCategories[0].categoryName.should.be.equal("Cars");
 
-        const postId2 = connection.driver instanceof CockroachDriver ? "2" : 2;
-        postCategories[1].id.should.be.equal(postId2);
+        postCategories[1].id.should.be.equal(2);
         postCategories[1].name.should.be.equal("About Boeing");
         postCategories[1].categoryName.should.be.equal("Airplanes");
 

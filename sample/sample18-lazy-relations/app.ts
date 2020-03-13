@@ -55,7 +55,9 @@ createConnection(options).then(connection => {
         .then(updatedAuthor => {
             console.log("Author has been updated: ", updatedAuthor);
             console.log("Now lets load all posts with their authors:");
-            return postRepository.find({ join: { alias: "post", leftJoinAndSelect: { author: "post.author" } } });
+            return postRepository.find({
+                relations: ["author"]
+            });
         })
         .then(posts => {
             console.log("Posts are loaded: ", posts);
@@ -87,7 +89,9 @@ createConnection(options).then(connection => {
         .then(posts => {
             console.log("Post has been saved with its categories. ");
             console.log("Lets find it now. ");
-            return postRepository.find({ join: { alias: "post", innerJoinAndSelect: { categories: "post.categories" } } });
+            return postRepository.find({
+                relations: ["categories"]
+            });
         })
         .then(posts => {
             console.log("Post with categories are loaded: ", posts);

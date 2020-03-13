@@ -12,31 +12,7 @@ export interface WhereExpression {
      * calling this function will override previously set WHERE conditions.
      * Additionally you can add parameters used in where expression.
      */
-    where(where: string, parameters?: ObjectLiteral): this;
-
-    /**
-     * Sets WHERE condition in the query builder.
-     * If you had previously WHERE expression defined,
-     * calling this function will override previously set WHERE conditions.
-     * Additionally you can add parameters used in where expression.
-     */
-    where(where: Brackets, parameters?: ObjectLiteral): this;
-
-    /**
-     * Sets WHERE condition in the query builder.
-     * If you had previously WHERE expression defined,
-     * calling this function will override previously set WHERE conditions.
-     * Additionally you can add parameters used in where expression.
-     */
-    where(where: ObjectLiteral, parameters?: ObjectLiteral): this;
-
-    /**
-     * Sets WHERE condition in the query builder.
-     * If you had previously WHERE expression defined,
-     * calling this function will override previously set WHERE conditions.
-     * Additionally you can add parameters used in where expression.
-     */
-    where(where: ObjectLiteral[], parameters?: ObjectLiteral): this;
+    where(where: any, parameters?: ObjectLiteral): this;
 
     /**
      * Sets WHERE condition in the query builder.

@@ -24,6 +24,9 @@ describe("github issues > #1576 Entities with null as `id` are merged [@next]", 
         newpost.categories = [cat1, cat2];
 
         const post = connection.manager.create(Post, newpost);
+        // connection.manager.create(Post, {
+        //     categories: cats
+        // });
 
         expect(post.categories).to.have.length(2);
     })));

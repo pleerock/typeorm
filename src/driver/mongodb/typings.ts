@@ -1,4 +1,4 @@
-import { EventEmitter, Readable, Writable } from "../../platform/PlatformTools";
+import {EventEmitter, Readable, Writable} from "../../platform/PlatformTools";
 
 /**
  * Creates a new MongoClient instance.
@@ -5014,7 +5014,7 @@ export declare class Cursor<T> extends Readable {
      * @see http://mongodb.github.io/node-mongodb-native/3.1/api/Cursor.html#forEach
      */
     forEach(iterator: IteratorCallback<T>, callback: EndCallback): void;
-    forEach(iterator: IteratorCallback<T>): Promise<void>;    
+    forEach(iterator: IteratorCallback<T>): Promise<void>;
 
     /**
      * Check if there is any document still available in the cursor.

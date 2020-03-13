@@ -1,8 +1,7 @@
 import "reflect-metadata";
 import {expect} from "chai";
-import {CockroachDriver} from "../../../../src/driver/cockroachdb/CockroachDriver";
 import {closeTestingConnections, createTestingConnections, reloadTestingDatabases} from "../../../utils/test-utils";
-import {Connection} from "../../../../src/connection/Connection";
+import {Connection} from "../../../../src";
 import {Tag} from "./entity/Tag";
 import {Post} from "./entity/Post";
 import {Category} from "./entity/Category";
@@ -10,7 +9,7 @@ import {Image} from "./entity/Image";
 import {User} from "./entity/User";
 
 describe("query builder > joins", () => {
-    
+
     let connections: Connection[];
     before(async () => connections = await createTestingConnections({
         entities: [__dirname + "/entity/*{.js,.ts}"],
@@ -178,12 +177,8 @@ describe("query builder > joins", () => {
                 .where("post.id = :id", { id: post.id })
                 .getRawOne();
 
-            if (connection.driver instanceof CockroachDriver) {
-                expect(loadedRawPost!["categories_id"]).to.be.equal("1");
 
-            } else {
-                expect(loadedRawPost!["categories_id"]).to.be.equal(1);
-            }
+            expect(loadedRawPost!["categories_id"]).to.be.equal(1);
 
         })));
 

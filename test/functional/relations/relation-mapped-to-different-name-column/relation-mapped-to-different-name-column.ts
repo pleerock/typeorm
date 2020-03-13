@@ -28,12 +28,7 @@ describe.skip("relations > relation mapped to relation with different name (#56)
 
         // now check
         const posts = await connection.manager.find(Post, {
-            join: {
-                alias: "post",
-                innerJoinAndSelect: {
-                    details: "post.details"
-                }
-            }
+            relations: ["details"],
         });
 
         posts.should.be.eql([{

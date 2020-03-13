@@ -54,6 +54,7 @@ export class ClosureSubjectExecutor {
             .values(closureJunctionInsertMap)
             .updateEntity(false)
             .callListeners(false)
+            .callObservers(false)
             .execute();
 
         let parent = subject.metadata.treeParentRelation!.getEntityValue(subject.entity!); // if entity was attached via parent

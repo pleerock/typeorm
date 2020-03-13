@@ -62,7 +62,7 @@ describe(`repository > the global condtion of "non-deleted" with eager relation`
         const loadedPosts = await connection
             .getRepository(PostWithRelation)
             .find({
-                withDeleted: true,
+                options: { withDeleted: true }
             });
 
         loadedPosts!.length.should.be.equal(3);
@@ -82,7 +82,7 @@ describe(`repository > the global condtion of "non-deleted" with eager relation`
         const loadedPost = await connection
             .getRepository(PostWithRelation)
             .findOne(1, {
-                withDeleted: true,
+                options: { withDeleted: true}
             });
         expect(loadedPost).to.exist;
         expect(loadedPost!.title).to.equals("title#1");

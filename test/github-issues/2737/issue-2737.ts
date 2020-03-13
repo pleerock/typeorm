@@ -1,43 +1,55 @@
-import {expect} from "chai";
 import "reflect-metadata";
-import {Connection} from "../../../src/connection/Connection";
-import {createTestingConnections, closeTestingConnections, reloadTestingDatabases} from "../../utils/test-utils";
-
-describe("github issues > #2737 MySQLDriver findChangedColumns (fields: width, precision)", () => {
+import { createTestingConnections, closeTestingConnections, reloadTestingDatabases } from "../../utils/test-utils";
+import { Connection } from "../../../src/connection/Connection";
+import { expect } from "chai";
+describe("github issues > #2737 sync schema on columns without precision, width or default value set to null", () => {
     let connections: Connection[];
-
-    before(async () => connections = await createTestingConnections({
-        dropSchema: false,
-        entities: [__dirname + "/entity/*{.js,.ts}"],
-        enabledDrivers: ["mysql", "aurora-data-api"],
-        schemaCreate: false,
-        cache: false,
-        driverSpecific: {
-            bigNumberStrings: false,
-        },
-    }));
-
-    beforeEach(() => reloadTestingDatabases(connections));
-
-    after(() => closeTestingConnections(connections));
-
-    it("should not create migrations for an existing unique index when bigNumberStrings is false", () => (
-        Promise.all(connections.map(async connection => {
-            const entityMetadata = connection.entityMetadatas.find(x => x.name === "TestEntity");
-            const indexMetadata = entityMetadata!.indices.find(index => (
-                index.columns.some(column =>  column.propertyName === "unique_column")));
-
-            // Ensure the setup is correct
-            expect(indexMetadata).to.exist;
-            expect(indexMetadata!.isUnique).to.be.true;
-
-            await connection.synchronize(false);
-
+    it("MySQL, MariaDb, Oracle", async () => {
+        connections = await createTestingConnections({
+            entities: [__dirname + "/entity/MySQLDummy{.js,.ts}"],
+            schemaCreate: true,
+            dropSchema: true,
+            enabledDrivers: ["mysql", "mariadb", "oracle"],
+        });
+        await reloadTestingDatabases(connections);
+        await Promise.all(connections.map(async connection => {
             const schemaBuilder = connection.driver.createSchemaBuilder();
             const syncQueries = await schemaBuilder.log();
-
-            expect(syncQueries.downQueries).to.be.an("array").that.is.empty;
-            expect(syncQueries.upQueries).to.be.an("array").that.is.empty;
-        })
-    )));
+            expect(syncQueries.downQueries).to.be.empty;
+            expect(syncQueries.upQueries).to.be.empty;
+        }));
+        await closeTestingConnections(connections);
+    });
+    it("MSSQL, Sqljs, Sqlite", async () => {
+        connections = await createTestingConnections({
+            entities: [__dirname + "/entity/MSSQLDummy{.js,.ts}"],
+            schemaCreate: true,
+            dropSchema: true,
+            enabledDrivers: ["mssql", "sqljs", "sqlite"],
+        });
+        await reloadTestingDatabases(connections);
+        await Promise.all(connections.map(async connection => {
+            const schemaBuilder = connection.driver.createSchemaBuilder();
+            const syncQueries = await schemaBuilder.log();
+            expect(syncQueries.downQueries).to.be.empty;
+            expect(syncQueries.upQueries).to.be.empty;
+        }));
+        await closeTestingConnections(connections);
+    });
+    it("Postgres", async () => {
+        connections = await createTestingConnections({
+            entities: [__dirname + "/entity/PostgresDummy{.js,.ts}"],
+            schemaCreate: true,
+            dropSchema: true,
+            enabledDrivers: ["postgres"],
+        });
+        await reloadTestingDatabases(connections);
+        await Promise.all(connections.map(async connection => {
+            const schemaBuilder = connection.driver.createSchemaBuilder();
+            const syncQueries = await schemaBuilder.log();
+            expect(syncQueries.downQueries).to.be.empty;
+            expect(syncQueries.upQueries).to.be.empty;
+        }));
+        await closeTestingConnections(connections);
+    });
 });

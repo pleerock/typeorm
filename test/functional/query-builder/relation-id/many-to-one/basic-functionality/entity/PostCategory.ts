@@ -3,26 +3,25 @@ import {ManyToOne} from "../../../../../../../src/decorator/relations/ManyToOne"
 import {Post} from "./Post";
 import {Category} from "./Category";
 import {Image} from "./Image";
+import {PrimaryColumn} from "../../../../../../../src/decorator/columns/PrimaryColumn";
 
 @Entity()
 export class PostCategory {
 
-    @ManyToOne(type => Post, post => post.categories, {
-        primary: true
-    })
+    @PrimaryColumn()
+    postId: number;
+
+    @PrimaryColumn()
+    categoryId: number;
+
+    @ManyToOne(type => Post, post => post.categories)
     post: Post;
 
-    @ManyToOne(type => Category, category => category.posts, {
-        primary: true
-    })
+    @ManyToOne(type => Category, category => category.posts)
     category: Category;
 
     @ManyToOne(type => Image)
     image: Image;
-
-    postId: number;
-
-    categoryId: number;
 
     imageId: number;
 

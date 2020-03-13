@@ -28,7 +28,7 @@ describe("other issues > preventing-injection", () => {
         }).should.be.rejected;
     })));
 
-    it("should skip non-exist columns in where expression via FindOptions", () => Promise.all(connections.map(async function(connection) {
+    it("should not allow using non-exist columns in where expression", () => Promise.all(connections.map(async function(connection) {
         const post = new Post();
         post.title = "hello";
         await connection.manager.save(post);
@@ -40,13 +40,12 @@ describe("other issues > preventing-injection", () => {
         });
         postWithOnlyIdSelected.should.be.eql([{ id: 1, title: "hello" }]);
 
-        const loadedPosts = await connection.manager.find(Post, {
+        await connection.manager.find(Post, {
             where: {
                 id: 2,
-                ["(WHERE LIMIT 1)"]: "hello"
+                ["(WHERE LIMIT 1)" as any]: "hello"
             }
-        });
-        loadedPosts.should.be.eql([]);
+        }).should.be.rejected;
     })));
 
     it("should not allow selection of non-exist columns via FindOptions", () => Promise.all(connections.map(async function(connection) {

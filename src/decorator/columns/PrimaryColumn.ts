@@ -2,7 +2,7 @@ import {ColumnOptions, ColumnType, getMetadataArgsStorage} from "../../";
 import {ColumnTypeUndefinedError} from "../../error/ColumnTypeUndefinedError";
 import {PrimaryColumnCannotBeNullableError} from "../../error/PrimaryColumnCannotBeNullableError";
 import {ColumnMetadataArgs} from "../../metadata-args/ColumnMetadataArgs";
-import { GeneratedMetadataArgs } from "../../metadata-args/GeneratedMetadataArgs";
+import {GeneratedMetadataArgs} from "../../metadata-args/GeneratedMetadataArgs";
 
 /**
  * Column decorator is used to mark a specific class property as a table column.

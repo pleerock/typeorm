@@ -5,7 +5,7 @@ import {Flight} from "./entity/Flight";
 import {PostgresDriver} from "../../../src/driver/postgres/PostgresDriver";
 import {expect} from "chai";
 
-describe.skip("github issues > #838 Time zones for timestamp columns are incorrectly fetched and persisted in PostgreSQL", () => {
+describe("github issues > #838 Time zones for timestamp columns are incorrectly fetched and persisted in PostgreSQL", () => {
 
     let connections: Connection[];
     let postgresConnection: Connection;
@@ -29,12 +29,18 @@ describe.skip("github issues > #838 Time zones for timestamp columns are incorre
         // await postgresConnection.query(`INSERT INTO "flight" ("id", "date") VALUES (1, '1989-08-16 14:00:00.000000 +03:00');`);
         // const results = await postgresConnection.query(`SELECT date FROM "flight" WHERE id = 1`);
         // console.log(results);
+        if (!postgresConnection) {
+            return;
+        }
         await postgresConnection.query(`INSERT INTO "flight" ("id", "date") VALUES (1, '${testDateString}');`);
         const flight = await postgresConnection.manager.findOne(Flight, 1);
         expect(flight!.date.toISOString()).to.equal(new Date(testDateString).toISOString());
     });
 
     it("should persist date & time to the PostgreSQL database correctly", async () => {
+        if (!postgresConnection) {
+            return;
+        }
         const testDate = new Date(testDateString);
         await postgresConnection.manager.save(new Flight(1, testDate));
 

@@ -14,13 +14,13 @@ export class Post {
     @Column({ type: "text" })
     text: string;
 
-    @Column({ type: "int" })
+    @Column()
     likesCount: number;
 
-    @Column({ type: "int" })
+    @Column()
     commentsCount: number;
 
-    @Column({ type: "int" })
+    @Column()
     watchesCount: number;
 
 }
