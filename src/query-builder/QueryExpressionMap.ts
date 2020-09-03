@@ -282,6 +282,12 @@ export class QueryExpressionMap {
      */
     nativeParameters: ObjectLiteral = {};
 
+    /**
+     * Indicates if the query is being run right after an insert operation
+     * for databases that doesn't support RETURNING
+     */
+    isHelperReturning: boolean = false;
+
     // -------------------------------------------------------------------------
     // Constructor
     // -------------------------------------------------------------------------

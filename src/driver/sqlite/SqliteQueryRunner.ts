@@ -76,7 +76,9 @@ export class SqliteQueryRunner extends AbstractSqliteQueryRunner {
                     connection.logger.logQueryError(err, query, parameters, this);
                     fail(new QueryFailedError(query, parameters, err));
                 } else {
-                    ok(isInsertQuery ? this["lastID"] : result);
+                    // Wrap lastID and changes into an object
+                    // changes is required to properly address an insert with ON CONFLICT
+                    ok(isInsertQuery ? { lastID: this["lastID"], changes: this["changes"] } : result);
                 }
             };
 

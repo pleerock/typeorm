@@ -37,6 +37,8 @@ import {createLiteralTreeRepository} from "../repository/LiteralTreeRepository";
 import {EntityTarget} from "../common/EntityTarget";
 import {createLiteralMongoRepository} from "../repository/LiteralMongoRepository";
 import {createLiteralRepository} from "../repository/LiteralRepository";
+import { UpdateOptions } from "../repository/UpdateOptions";
+import { InsertOptions } from "../repository/InsertOptions";
 
 /**
  * Entity manager supposed to work with any entity, automatically find its repository and call its methods,
@@ -250,7 +252,7 @@ export function createLiteralEntityManager<Entity>({ connection, queryRunner }: 
                 .then(() => entity);
         },
 
-        async insert<Entity>(target: EntityTarget<Entity>, entity: QueryDeepPartialEntity<Entity> | (QueryDeepPartialEntity<Entity>[])): Promise<InsertResult> {
+        async insert<Entity>(target: EntityTarget<Entity>, entity: QueryDeepPartialEntity<Entity> | (QueryDeepPartialEntity<Entity>[]), options?: InsertOptions): Promise<InsertResult> {
 
             // TODO: Oracle does not support multiple values. Need to create another nice solution.
             if (this.connection.driver instanceof OracleDriver && Array.isArray(entity)) {
@@ -261,10 +263,11 @@ export function createLiteralEntityManager<Entity>({ connection, queryRunner }: 
                 .insert()
                 .into(target)
                 .values(entity)
+                .updateEntity(options?.reload === false ? false : true)
                 .execute();
         },
 
-        update<Entity>(target: EntityTarget<Entity>, criteria: string | string[] | number | number[] | Date | Date[] | ObjectID | ObjectID[] | FindOptionsWhere<Entity>, partialEntity: QueryDeepPartialEntity<Entity>): Promise<UpdateResult> {
+        update<Entity>(target: EntityTarget<Entity>, criteria: string | string[] | number | number[] | Date | Date[] | ObjectID | ObjectID[] | FindOptionsWhere<Entity>, partialEntity: QueryDeepPartialEntity<Entity>, options?: UpdateOptions): Promise<UpdateResult> {
 
             // if user passed empty criteria or empty list of criterias, then throw an error
             if (criteria === undefined ||
@@ -284,6 +287,7 @@ export function createLiteralEntityManager<Entity>({ connection, queryRunner }: 
                     .update(target)
                     .set(partialEntity)
                     .whereInIds(criteria)
+                    .updateEntity(options?.reload === false ? false : true)
                     .execute();
 
             } else {
@@ -291,6 +295,7 @@ export function createLiteralEntityManager<Entity>({ connection, queryRunner }: 
                     .update(target)
                     .set(partialEntity)
                     .where(criteria)
+                    .updateEntity(options?.reload === false ? false : true)
                     .execute();
             }
         },

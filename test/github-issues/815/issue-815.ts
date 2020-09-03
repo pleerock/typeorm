@@ -78,12 +78,16 @@ describe("github issues > #815 @RelationId properties are not updated after enti
         expect(category1).to.be.eql({
             firstId: 2,
             secondId: 3,
+            post: null,
+            postId: null,
             name: "relation-id-category1"
         });
 
         expect(category2).to.be.eql({
             firstId: 2,
             secondId: 4,
+            post: null,
+            postId: null,
             name: "relation-id-category2"
         });
 
@@ -93,15 +97,19 @@ describe("github issues > #815 @RelationId properties are not updated after enti
             categories: [{
                 firstId: 2,
                 secondId: 3,
+                post: null,
+                postId: null,
                 name: "relation-id-category1"
             }, {
                 firstId: 2,
                 secondId: 4,
+                post: null,
+                postId: null,
                 name: "relation-id-category2"
             }],
             categoryIds: [{
                 firstId: 2,
-                secondId: 3,
+                secondId: 3
             }, {
                 firstId: 2,
                 secondId: 4
@@ -149,11 +157,13 @@ describe("github issues > #815 @RelationId properties are not updated after enti
             name: "relation-id-category1",
             manyPosts: [{
                 id: 1,
-                title: "About relation id1",
+                title: "About relation id1"
             }, {
                 id: 2,
-                title: "About relation id2",
+                title: "About relation id2"
             }],
+            post: null,
+            postId: null,
             manyPostIds: [1, 2]
         });
 
@@ -164,9 +174,11 @@ describe("github issues > #815 @RelationId properties are not updated after enti
             name: "relation-id-category2",
             manyPosts: [{
                 id: 2,
-                title: "About relation id2",
+                title: "About relation id2"
             }],
-            manyPostIds: [2]
+            manyPostIds: [2],
+            post: null,
+            postId: null,
         });
 
     })));
@@ -193,12 +205,16 @@ describe("github issues > #815 @RelationId properties are not updated after enti
         expect(category1).to.be.eql({
             firstId: 2,
             secondId: 3,
+            post: null,
+            postId: null,
             name: "relation-id-category1"
         });
 
         expect(category2).to.be.eql({
             firstId: 2,
             secondId: 4,
+            post: null,
+            postId: null,
             name: "relation-id-category2"
         });
 
@@ -208,10 +224,14 @@ describe("github issues > #815 @RelationId properties are not updated after enti
             manyCategories: [{
                 firstId: 2,
                 secondId: 3,
+                post: null,
+                postId: null,
                 name: "relation-id-category1"
             }, {
                 firstId: 2,
                 secondId: 4,
+                post: null,
+                postId: null,
                 name: "relation-id-category2"
             }],
             manyCategoryIds: [{

@@ -585,7 +585,8 @@ export class SqlServerDriver implements Driver {
         return Object.keys(insertResult).reduce((map, key) => {
             const column = metadata.findColumnWithDatabaseName(key);
             if (column) {
-                OrmUtils.mergeDeep(map, column.createValueMap(this.prepareHydratedValue(insertResult[key], column)));
+                OrmUtils.mergeDeep(map, column.createValueMap(insertResult[key]));
+                // OrmUtils.mergeDeep(map, column.createValueMap(this.prepareHydratedValue(insertResult[key], column)));
             }
             return map;
         }, {} as ObjectLiteral);

@@ -26,7 +26,8 @@ describe("persistence > multi primary keys", () => {
             post1.should.be.eql({
                 firstId: 1,
                 secondId: 2,
-                title: "Hello Post #1"
+                title: "Hello Post #1",
+                category: null
             });
 
 

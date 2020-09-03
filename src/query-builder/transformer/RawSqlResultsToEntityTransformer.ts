@@ -135,7 +135,10 @@ export class RawSqlResultsToEntityTransformer {
                 return;
 
             const value = rawResults[0][DriverUtils.buildColumnAlias(this.driver, alias.name, column.databaseName)];
-            if (value === undefined || column.isVirtual)
+
+            // Allow virtual columns to show only in the context of selecting as artificial RETURNING
+            // for databases that doesn't support native RETURNING
+            if (value === undefined || (column.isVirtual && this.expressionMap.isHelperReturning !== true))
                 return;
 
             // if user does not selected the whole entity or he used partial selection and does not select this particular column

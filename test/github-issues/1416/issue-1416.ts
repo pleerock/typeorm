@@ -37,14 +37,17 @@ describe("github issue > #1416 Wrong behavior when fetching an entity that has a
         photoAuthor.photos = [photo];
         await connection.manager.save(photoAuthor);
 
-        const author = await connection.manager.findOne(Author, { 
-            where: { 
+        const author = await connection.manager.findOne(Author, {
+            where: {
                 name: photoAuthor.name
-            }, 
-            relations: ["photos"] 
+            },
+            relations: ["photos"]
         }) as Author;
         expect(author).not.to.be.undefined;
         expect(author.photos[0]).not.to.be.undefined;
+        // Since save includes all column, photo will contain author: null
+        // while findOne doesn't (as it's irrelevant)
+        delete photo.author;
         expect(author.photos[0]).to.eql(photo);
         expect(author.photos[0].metadata).not.to.be.undefined;
         expect(author.photos[0].metadata).to.eql(metadata);

@@ -13,6 +13,8 @@ import {SaveOptions} from "./SaveOptions";
 import {ObjectUtils} from "../util/ObjectUtils";
 import {QueryDeepPartialEntity} from "../query-builder/QueryPartialEntity";
 import * as Observable from "zen-observable";
+import { InsertOptions } from "./InsertOptions";
+import { UpdateOptions } from "./UpdateOptions";
 
 /**
  * Base abstract entity for all entities, used in ActiveRecord patterns.
@@ -202,7 +204,7 @@ export class BaseEntity {
      * Executes fast and efficient INSERT query.
      * Does not check if entity exist in the database, so query will fail if duplicate entity is being inserted.
      */
-    static insert<T extends BaseEntity>(this: ObjectType<T>, entity: QueryDeepPartialEntity<T>|QueryDeepPartialEntity<T>[], options?: SaveOptions): Promise<InsertResult> {
+    static insert<T extends BaseEntity>(this: ObjectType<T>, entity: QueryDeepPartialEntity<T>|QueryDeepPartialEntity<T>[], options?: InsertOptions): Promise<InsertResult> {
         return (this as any).getRepository().insert(entity, options);
     }
 
@@ -212,7 +214,7 @@ export class BaseEntity {
      * Executes fast and efficient UPDATE query.
      * Does not check if entity exist in the database.
      */
-    static update<T extends BaseEntity>(this: ObjectType<T>, criteria: string|string[]|number|number[]|Date|Date[]|ObjectID|ObjectID[]|FindOptionsWhere<T>, partialEntity: QueryDeepPartialEntity<T>, options?: SaveOptions): Promise<UpdateResult> {
+    static update<T extends BaseEntity>(this: ObjectType<T>, criteria: string|string[]|number|number[]|Date|Date[]|ObjectID|ObjectID[]|FindOptionsWhere<T>, partialEntity: QueryDeepPartialEntity<T>, options?: UpdateOptions): Promise<UpdateResult> {
         return (this as any).getRepository().update(criteria, partialEntity, options);
     }
 

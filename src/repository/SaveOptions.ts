@@ -33,7 +33,6 @@ export interface SaveOptions {
      * Flag to determine whether the entity that is being persisted
      * should be reloaded during the persistence operation.
      *
-     * It will work only on databases which does not support RETURNING / OUTPUT statement.
      * Enabled by default.
      */
     reload?: boolean;

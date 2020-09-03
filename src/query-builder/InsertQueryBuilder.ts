@@ -19,6 +19,7 @@ import {BroadcasterResult} from "../subscriber/BroadcasterResult";
 import {EntitySchema, EntityTarget} from "../";
 import {OracleDriver} from "../driver/oracle/OracleDriver";
 import {AuroraDataApiDriver} from "../driver/aurora-data-api/AuroraDataApiDriver";
+import { SqliteDriver } from "../driver/sqlite/SqliteDriver";
 
 /**
  * Allows to build complex sql queries in a fashion way and execute those queries.
@@ -100,7 +101,27 @@ export class InsertQueryBuilder<Entity> extends QueryBuilder<Entity> {
             // load returning results and set them to the entity if entity updation is enabled
             if (this.expressionMap.updateEntity === true && this.expressionMap.mainAlias!.hasMetadata) {
                 // console.time(".updating entity");
-                await returningResultsEntityUpdator.insert(insertResult, valueSets);
+
+                // There's a special case with on conflict DO NOTHING and similars
+                // to avoid updating the entity with the wrong data we need to check
+                // if changes > 0
+                let update = true;
+                if (this.expressionMap.onConflict || this.expressionMap.onIgnore) {
+
+                    if (this.connection.driver instanceof SqliteDriver) {
+                        if (insertResult.raw?.changes === 0) {
+                            update = false;
+                        }
+                    }
+                    else if (this.connection.driver instanceof MysqlDriver) {
+                        if (insertResult.raw.changedRows === 0 && insertResult.raw.affectedRows === 0) {
+                            update = false;
+                        }
+                    }
+                }
+                if (update) {
+                    await returningResultsEntityUpdator.insert(insertResult, valueSets);
+                }
                 // console.timeEnd(".updating entity");
             }
 

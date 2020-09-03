@@ -365,19 +365,24 @@ export class SubjectExecutor {
                         }
                     });
                 }
-            }
+                subjects.forEach(subject => {
+                    if (subject.generatedMap) {
+                        subject.metadata.columns.forEach(column => {
+                            const value = column.getEntityValue(subject.generatedMap!);
+                            if (value !== undefined && value !== null) {
+                                // Avoids double hydration since drivers without RETURNING
+                                // already hydrate their results on the helper query
+                                let preparedValue = value;
+                                if (this.queryRunner.connection.driver.isReturningSqlSupported()) {
+                                    preparedValue = this.queryRunner.connection.driver.prepareHydratedValue(value, column);
+                                    column.setEntityValue(subject.generatedMap!, preparedValue);
+                                }
 
-            subjects.forEach(subject => {
-                if (subject.generatedMap) {
-                    subject.metadata.columns.forEach(column => {
-                        const value = column.getEntityValue(subject.generatedMap!);
-                        if (value !== undefined && value !== null) {
-                            const preparedValue = this.queryRunner.connection.driver.prepareHydratedValue(value, column);
-                            column.setEntityValue(subject.generatedMap!, preparedValue);
-                        }
-                    });
-                }
-            });
+                            }
+                        });
+                    }
+                });
+            }
         });
     }
 
@@ -439,23 +444,13 @@ export class SubjectExecutor {
                     subject.metadata.columns.forEach(column => {
                         const value = column.getEntityValue(subject.generatedMap!);
                         if (value !== undefined && value !== null) {
-                            const preparedValue = this.queryRunner.connection.driver.prepareHydratedValue(value, column);
+                            if (this.queryRunner.connection.driver.isReturningSqlSupported()) {
+                                const preparedValue = this.queryRunner.connection.driver.prepareHydratedValue(value, column);
                             column.setEntityValue(subject.generatedMap!, preparedValue);
+                            }
                         }
                     });
                 }
-
-                // experiments, remove probably, need to implement tree tables children removal
-                // if (subject.updatedRelationMaps.length > 0) {
-                //     await Promise.all(subject.updatedRelationMaps.map(async updatedRelation => {
-                //         if (!updatedRelation.relation.isTreeParent) return;
-                //         if (!updatedRelation.value !== null) return;
-                //
-                //         if (subject.metadata.treeType === "closure-table") {
-                //             await new ClosureSubjectExecutor(this.queryRunner).deleteChildrenOf(subject);
-                //         }
-                //     }));
-                // }
             }
         }));
     }

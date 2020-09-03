@@ -105,9 +105,13 @@ describe("database schema > column types > mssql", () => { // https://github.com
         // loadedPost.datetime.getTime().should.be.equal(post.datetime.getTime());
         // loadedPost.datetime2.getTime().should.be.equal(post.datetime2.getTime());
         // loadedPost.datetimeoffset.getTime().should.be.equal(post.datetimeoffset.getTime());
-        loadedPost.geometry1.should.be.equal(post.geometry1);
-        loadedPost.geometry2.should.be.equal(post.geometry2);
-        loadedPost.geometry3.should.be.equal(post.geometry3);
+
+        // mssql driver is sending an object when updating entity on save (returning)
+        // and a plain string when doing a SELECT
+        // hence the replacement with strings
+        loadedPost.geometry1.should.be.equal("LINESTRING (100 100, 20 180, 180 180)");
+        loadedPost.geometry2.should.be.equal("POLYGON ((0 0, 150 0, 150 150, 0 150, 0 0))");
+        loadedPost.geometry3.should.be.equal("GEOMETRYCOLLECTION (POINT (4 0), LINESTRING (4 2, 5 3), POLYGON ((0 0, 3 0, 3 3, 0 3, 0 0), (1 1, 1 2, 2 2, 2 1, 1 1)))");
         loadedPost.smalldatetime.getTime().should.be.equal(post.smalldatetime.getTime());
         loadedPost.timeObj.should.be.equal(DateUtils.mixedTimeToString(post.timeObj));
         loadedPost.time.should.be.equal(post.time);

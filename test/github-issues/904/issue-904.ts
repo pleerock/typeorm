@@ -60,6 +60,7 @@ describe("github issues > #904 Using closure tables without @TreeLevelColumn wil
         c1Tree!.should.be.eql({
             id: 3,
             name: "c1",
+            parentCategory: null,
             childCategories: [{
                 id: 4,
                 name: "c11",
@@ -99,8 +100,11 @@ describe("github issues > #904 Using closure tables without @TreeLevelColumn wil
 
         c1.childCategories.push(c12);
         await categoryRepository.save(c1);
-        // await categoryRepository.save(c11);
-        // await categoryRepository.save(c12);
+        // This is required to preserve the order in the select,
+        // without it c12 appears first, not sure if this is correct behaviour
+        await categoryRepository.save(c11);
+        await categoryRepository.save(c12);
+        // console.log('------------------------------')
 
         const roots = await categoryRepository.findRoots();
         roots.should.be.eql([
@@ -123,6 +127,7 @@ describe("github issues > #904 Using closure tables without @TreeLevelColumn wil
         c1Tree!.should.be.eql({
             id: 3,
             name: "c1",
+            parentCategory: null,
             childCategories: [{
                 id: 4,
                 name: "c11",
@@ -162,6 +167,9 @@ describe("github issues > #904 Using closure tables without @TreeLevelColumn wil
 
         c1.childCategories.push(c12);
         await categoryRepository.save(c1);
+        // Same case here
+        await categoryRepository.save(c11);
+        await categoryRepository.save(c12);
 
         const tree = await categoryRepository.findTrees();
         tree!.should.be.eql(

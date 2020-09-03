@@ -249,6 +249,11 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
         return this;
     }
 
+    markHelperReturning(): this {
+        this.expressionMap.isHelperReturning = true;
+        return this;
+    }
+
     /**
      * Specifies FROM which entity's table select/update/delete will be executed.
      * Also sets a main string alias of the selection data.

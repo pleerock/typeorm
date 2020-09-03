@@ -20,7 +20,7 @@ describe("other issues > hydration performance", () => {
         for (let i = 1; i <= 100000; i++) {
             posts.push(new Post("Post #" + i));
         }
-        await connection.manager.insert(Post, posts);
+        await connection.manager.insert(Post, posts, {reload: false});
 
         // select them using raw sql
         // console.time("select using raw sql");

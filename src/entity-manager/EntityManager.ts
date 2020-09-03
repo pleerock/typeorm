@@ -18,6 +18,8 @@ import { Repository } from "../repository/Repository";
 import { SaveOptions } from "../repository/SaveOptions";
 import { TreeRepository } from "../repository/TreeRepository";
 import { EntitySchema } from "..";
+import { InsertOptions } from "../repository/InsertOptions";
+import { UpdateOptions } from "../repository/UpdateOptions";
 
 /**
  * Entity manager supposed to work with any entity, automatically find its repository and call its methods,
@@ -228,7 +230,7 @@ export type EntityManager = {
      * Does not check if entity exist in the database, so query will fail if duplicate entity is being inserted.
      * You can execute bulk inserts using this method.
      */
-    insert<Entity>(target: EntityTarget<Entity>, entity: QueryDeepPartialEntity<Entity>|(QueryDeepPartialEntity<Entity>[])): Promise<InsertResult>;
+    insert<Entity>(target: EntityTarget<Entity>, entity: QueryDeepPartialEntity<Entity>|(QueryDeepPartialEntity<Entity>[]), options?: InsertOptions): Promise<InsertResult>;
 
     /**
      * Updates entity partially. Entity can be found by a given condition(s).
@@ -237,7 +239,7 @@ export type EntityManager = {
      * Does not check if entity exist in the database.
      * Condition(s) cannot be empty.
      */
-    update<Entity>(target: EntityTarget<Entity>, criteria: string|string[]|number|number[]|Date|Date[]|ObjectID|ObjectID[]|FindOptionsWhere<Entity>, partialEntity: QueryDeepPartialEntity<Entity>): Promise<UpdateResult>;
+    update<Entity>(target: EntityTarget<Entity>, criteria: string|string[]|number|number[]|Date|Date[]|ObjectID|ObjectID[]|FindOptionsWhere<Entity>, partialEntity: QueryDeepPartialEntity<Entity>, options?: UpdateOptions): Promise<UpdateResult>;
 
     /**
      * Deletes entities by a given condition(s).

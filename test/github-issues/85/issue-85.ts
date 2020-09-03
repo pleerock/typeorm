@@ -33,7 +33,10 @@ describe("github issues > #85 - Column option insert: false, update: false", () 
 
     const doc1 = new Document();
     doc1.id = 1;
-    await connection.manager.save(doc1);
+
+    // Since reload now fetch all columns by default, this indeed will throw an error
+    // unless reload is set to false
+    await connection.manager.save(doc1, {reload: false});
     const docs = connection.getRepository(Document);
     // We got here without throwing an error, which is good news.
     expect(await docs.count()).to.eql(1);
