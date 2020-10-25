@@ -6,10 +6,9 @@ export class DefaultValueAtColumn1567689639608 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS "post"
         (
-          id serial NOT NULL,
+          id serial NOT NULL PRIMARY KEY,
           incr integer DEFAULT 10,
-          title character varying(255),
-          CONSTRAINT post_pkey PRIMARY KEY (id)
+          title character varying(255)
         );
     `);
   }
