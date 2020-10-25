@@ -8,7 +8,11 @@ export class Post {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
+    @Column({
+        name: 'incr',
+        nullable: true,
+        default: 10,
+    })
     incr: number;
 
     @Column()
