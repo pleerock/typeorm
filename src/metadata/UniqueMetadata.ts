@@ -1,8 +1,9 @@
-import {EmbeddedMetadata} from "./EmbeddedMetadata";
-import {EntityMetadata} from "./EntityMetadata";
-import {NamingStrategyInterface} from "../naming-strategy/NamingStrategyInterface";
-import {ColumnMetadata} from "./ColumnMetadata";
-import {UniqueMetadataArgs} from "../metadata-args/UniqueMetadataArgs";
+import { EmbeddedMetadata } from "./EmbeddedMetadata";
+import { EntityMetadata } from "./EntityMetadata";
+import { NamingStrategyInterface } from "../naming-strategy/NamingStrategyInterface";
+import { ColumnMetadata } from "./ColumnMetadata";
+import { UniqueMetadataArgs } from "../metadata-args/UniqueMetadataArgs";
+import { DeferrableType } from "./types/DeferrableType";
 
 /**
  * Unique metadata contains all information about table's unique constraints.
@@ -26,7 +27,7 @@ export class UniqueMetadata {
     /**
      * Target class to which metadata is applied.
      */
-    target?: Function|string;
+    target?: Function | string;
 
     /**
      * Unique columns.
@@ -41,7 +42,7 @@ export class UniqueMetadata {
     /**
      * User specified column names.
      */
-    givenColumnNames?: ((object?: any) => (any[]|{ [key: string]: number }))|string[];
+    givenColumnNames?: ((object?: any) => (any[] | { [key: string]: number })) | string[];
 
     /**
      * Final unique constraint name.
@@ -55,6 +56,11 @@ export class UniqueMetadata {
      * Used only by MongoDB driver.
      */
     columnNamesWithOrderingMap: { [key: string]: number } = {};
+
+    /**
+     * When to check the constraints of a foreign key.
+     */
+    deferrable?: DeferrableType;
 
     // ---------------------------------------------------------------------
     // Constructor
@@ -75,6 +81,7 @@ export class UniqueMetadata {
             this.target = options.args.target;
             this.givenName = options.args.name;
             this.givenColumnNames = options.args.columns;
+            this.deferrable = options.args.options ? options.args.options.deferrable : undefined;
         }
     }
 
@@ -126,7 +133,7 @@ export class UniqueMetadata {
                 const entityName = this.entityMetadata.targetName;
                 throw new Error(`Unique constraint ${indexName}contains column that is missing in the entity (${entityName}): ` + propertyName);
             })
-            .reduce((a, b) => a.concat(b));
+                .reduce((a, b) => a.concat(b));
         }
 
         this.columnNamesWithOrderingMap = Object.keys(map).reduce((updatedMap, key) => {

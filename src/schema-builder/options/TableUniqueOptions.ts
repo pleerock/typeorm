@@ -17,4 +17,10 @@ export interface TableUniqueOptions {
      */
     columnNames: string[];
 
+    /**
+     * Set this foreign key constraint as "DEFERRABLE" e.g. check constraints at start 
+     * or at the end of a transaction
+     */
+    deferrable?: string;
+
 }

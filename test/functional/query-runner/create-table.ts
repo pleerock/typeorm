@@ -1,17 +1,17 @@
 import "reflect-metadata";
-import {expect} from "chai";
-import {Connection} from "../../../src/connection/Connection";
-import {CockroachDriver} from "../../../src/driver/cockroachdb/CockroachDriver";
-import {SapDriver} from "../../../src/driver/sap/SapDriver";
-import {closeTestingConnections, createTestingConnections} from "../../utils/test-utils";
-import {Table} from "../../../src/schema-builder/table/Table";
-import {TableOptions} from "../../../src/schema-builder/options/TableOptions";
-import {Post} from "./entity/Post";
-import {MysqlDriver} from "../../../src/driver/mysql/MysqlDriver";
-import {AbstractSqliteDriver} from "../../../src/driver/sqlite-abstract/AbstractSqliteDriver";
-import {OracleDriver} from "../../../src/driver/oracle/OracleDriver";
-import {Photo} from "./entity/Photo";
-import {Book2, Book} from "./entity/Book";
+import { expect } from "chai";
+import { Connection } from "../../../src/connection/Connection";
+import { CockroachDriver } from "../../../src/driver/cockroachdb/CockroachDriver";
+import { SapDriver } from "../../../src/driver/sap/SapDriver";
+import { closeTestingConnections, createTestingConnections } from "../../utils/test-utils";
+import { Table } from "../../../src/schema-builder/table/Table";
+import { TableOptions } from "../../../src/schema-builder/options/TableOptions";
+import { Post } from "./entity/Post";
+import { MysqlDriver } from "../../../src/driver/mysql/MysqlDriver";
+import { AbstractSqliteDriver } from "../../../src/driver/sqlite-abstract/AbstractSqliteDriver";
+import { OracleDriver } from "../../../src/driver/oracle/OracleDriver";
+import { Photo } from "./entity/Photo";
+import { Book2, Book } from "./entity/Book";
 
 describe("query runner > create table", () => {
 
@@ -200,9 +200,9 @@ describe("query runner > create table", () => {
         };
 
         if (connection.driver instanceof MysqlDriver || connection.driver instanceof SapDriver) {
-            categoryTableOptions.indices = [{ columnNames: ["name", "alternativeName"]}];
+            categoryTableOptions.indices = [{ columnNames: ["name", "alternativeName"] }];
         } else {
-            categoryTableOptions.uniques = [{ columnNames: ["name", "alternativeName"]}];
+            categoryTableOptions.uniques = [{ columnNames: ["name", "alternativeName"] }];
         }
 
         // When we mark column as unique, MySql create index for that column and we don't need to create index separately.

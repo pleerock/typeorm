@@ -1,3 +1,5 @@
+import { UniqueOptions } from "../decorator/options/UniqueOptions";
+
 export interface EntitySchemaUniqueOptions {
 
     /**
@@ -8,6 +10,11 @@ export interface EntitySchemaUniqueOptions {
     /**
      * Unique column names.
      */
-    columns?: ((object?: any) => (any[]|{ [key: string]: number }))|string[];
+    columns?: ((object?: any) => (any[] | { [key: string]: number })) | string[];
+
+    /**
+     * Additional relation options.
+     */
+    readonly options?: UniqueOptions;
 
 }
