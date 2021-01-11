@@ -2004,10 +2004,17 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
         const selectString = Object.keys(orderBys)
             .map(orderCriteria => {
                 if (orderCriteria.indexOf(".") !== -1) {
-                    const [aliasName, propertyPath] = orderCriteria.split(".");
+                    const [aliasName, fieldSpec] = orderCriteria.split(".");
+                    let propertyPath = fieldSpec;
                     const alias = this.expressionMap.findAliasByName(aliasName);
+                    let rawFieldSpecs = "";
+                    const spIdx = propertyPath.indexOf(" ");
+                    if (spIdx !== -1) {
+                        propertyPath = propertyPath.slice(0, spIdx);
+                        rawFieldSpecs = propertyPath.slice(spIdx);
+                    }
                     const column = alias.metadata.findColumnWithPropertyName(propertyPath);
-                    return this.escape(parentAlias) + "." + this.escape(DriverUtils.buildColumnAlias(this.connection.driver, aliasName, column!.databaseName));
+                    return this.escape(parentAlias) + "." + this.escape(DriverUtils.buildColumnAlias(this.connection.driver, aliasName, column!.databaseName)) + rawFieldSpecs;
                 } else {
                     if (this.expressionMap.selects.find(select => select.selection === orderCriteria || select.aliasName === orderCriteria))
                         return this.escape(parentAlias) + "." + orderCriteria;
@@ -2020,10 +2027,17 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
         const orderByObject: OrderByCondition = {};
         Object.keys(orderBys).forEach(orderCriteria => {
             if (orderCriteria.indexOf(".") !== -1) {
-                const [aliasName, propertyPath] = orderCriteria.split(".");
+                const [aliasName, fieldSpec] = orderCriteria.split(".");
+                let propertyPath = fieldSpec;
                 const alias = this.expressionMap.findAliasByName(aliasName);
+                let rawFieldSpecs = "";
+                const spIdx = propertyPath.indexOf(" ");
+                if (spIdx !== -1) {
+                    propertyPath = propertyPath.slice(0, spIdx);
+                    rawFieldSpecs = propertyPath.slice(spIdx);
+                }
                 const column = alias.metadata.findColumnWithPropertyName(propertyPath);
-                orderByObject[this.escape(parentAlias) + "." + this.escape(DriverUtils.buildColumnAlias(this.connection.driver, aliasName, column!.databaseName))] = orderBys[orderCriteria];
+                orderByObject[this.escape(parentAlias) + "." + this.escape(DriverUtils.buildColumnAlias(this.connection.driver, aliasName, column!.databaseName)) + rawFieldSpecs] = orderBys[orderCriteria];
             } else {
                 if (this.expressionMap.selects.find(select => select.selection === orderCriteria || select.aliasName === orderCriteria)) {
                     orderByObject[this.escape(parentAlias) + "." + orderCriteria] = orderBys[orderCriteria];
