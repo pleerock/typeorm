@@ -106,13 +106,14 @@ export class RawSqlResultsToEntityTransformer {
 
         // get value from columns selections and put them into newly created entity
         const hasColumns = this.transformColumns(rawResults, alias, entity, metadata);
+        const hasComputedColumns = this.transformComputedColumns(rawResults, alias, entity);
         const hasRelations = this.transformJoins(rawResults, entity, alias, metadata);
         const hasRelationIds = this.transformRelationIds(rawResults, alias, entity, metadata);
         const hasRelationCounts = this.transformRelationCounts(rawResults, alias, entity);
 
         // if we have at least one selected column then return this entity
         // since entity must have at least primary columns to be really selected and transformed into entity
-        if (hasColumns)
+        if (hasColumns || hasComputedColumns)
             return entity;
 
         // if we don't have any selected column we should not return entity,
@@ -147,6 +148,36 @@ export class RawSqlResultsToEntityTransformer {
             if (value !== null) // we don't mark it as has data because if we will have all nulls in our object - we don't need such object
                 hasData = true;
         });
+        return hasData;
+    }
+
+    protected transformComputedColumns(rawResults: any[], alias: Alias, entity: ObjectLiteral): boolean {
+        let hasData = false;
+
+        this.expressionMap.computedSelects.forEach(computedSelect => {
+            if (computedSelect.aliasName && computedSelect.mapToProperty) {
+                const fields: any[] = computedSelect.mapToProperty.split(".");
+                let entityPart = entity;
+
+                if (fields[0] === alias.name) {
+                    fields.shift();
+                    fields.forEach((field, index) => {
+                        if (index < (fields.length - 1)) {
+                            if (field && !entityPart[field]) {
+                                entityPart[field] = {};
+                            }
+
+                            entityPart = entityPart[field];
+                        } else {
+                            const value = this.driver.prepareHydratedValue(rawResults[0][computedSelect.aliasName as string], computedSelect.columnType as string);
+                            entityPart[field] = value;
+                        }
+                    });
+                }
+
+            }
+        });
+
         return hasData;
     }
 

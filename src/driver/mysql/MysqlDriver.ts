@@ -478,42 +478,50 @@ export class MysqlDriver implements Driver {
     /**
      * Prepares given value to a value to be persisted, based on its column type or metadata.
      */
-    prepareHydratedValue(value: any, columnMetadata: ColumnMetadata): any {
-        if (value === null || value === undefined)
-            return columnMetadata.transformer ? ApplyValueTransformers.transformFrom(columnMetadata.transformer, value) : value;
+    prepareHydratedValue(value: any, columnMetadata: ColumnMetadata | string): any {
+        const columnType: any = columnMetadata instanceof ColumnMetadata ? columnMetadata.type : columnMetadata;
 
-        if (columnMetadata.type === Boolean || columnMetadata.type === "bool" || columnMetadata.type === "boolean") {
-            value = value ? true : false;
+        if (columnMetadata instanceof ColumnMetadata) {
+            if (value === null || value === undefined)
+                return columnMetadata.transformer ? ApplyValueTransformers.transformFrom(columnMetadata.transformer, value) : value;
+        }
 
-        } else if (columnMetadata.type === "datetime" || columnMetadata.type === Date) {
+        if (columnType === Boolean || columnType === "bool" || columnType === "boolean") {
+            value = OrmUtils.toBoolean(value);
+
+        } else if (columnType === "datetime" || columnType === Date) {
             value = DateUtils.normalizeHydratedDate(value);
 
-        } else if (columnMetadata.type === "date") {
+        } else if (columnType === "date") {
             value = DateUtils.mixedDateToDateString(value);
 
-        } else if (columnMetadata.type === "json") {
+        } else if (columnType === "json") {
             value = typeof value === "string" ? JSON.parse(value) : value;
 
-        } else if (columnMetadata.type === "time") {
+        } else if (columnType === "time") {
             value = DateUtils.mixedTimeToString(value);
 
-        } else if (columnMetadata.type === "simple-array") {
+        } else if (columnType === "simple-array") {
             value = DateUtils.stringToSimpleArray(value);
 
-        } else if (columnMetadata.type === "simple-json") {
+        } else if (columnType === "simple-json") {
             value = DateUtils.stringToSimpleJson(value);
 
-        } else if ((columnMetadata.type === "enum" || columnMetadata.type === "simple-enum")
+        } else if (
+            (columnMetadata instanceof ColumnMetadata) &&
+            (columnType === "enum" || columnType === "simple-enum")
             && columnMetadata.enum
             && !isNaN(value)
             && columnMetadata.enum.indexOf(parseInt(value)) >= 0) {
             // convert to number if that exists in possible enum options
             value = parseInt(value);
-        } else if (columnMetadata.type === "set") {
+        } else if (columnType === "set") {
             value = DateUtils.stringToSimpleArray(value);
+        } else if (columnType === "int") {
+            value = Number(value);
         }
 
-        if (columnMetadata.transformer)
+        if (columnMetadata instanceof ColumnMetadata && columnMetadata.transformer)
             value = ApplyValueTransformers.transformFrom(columnMetadata.transformer, value);
 
         return value;

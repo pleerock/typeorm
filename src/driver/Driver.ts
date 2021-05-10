@@ -132,7 +132,7 @@ export interface Driver {
     /**
      * Prepares given value to a value to be persisted, based on its column type.
      */
-    prepareHydratedValue(value: any, column: ColumnMetadata): any;
+    prepareHydratedValue(value: any, column: ColumnMetadata | string): any;
 
     /**
      * Transforms type of the given column to a database column type.

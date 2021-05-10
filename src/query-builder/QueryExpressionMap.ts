@@ -46,6 +46,8 @@ export class QueryExpressionMap {
      */
     selects: SelectQuery[] = [];
 
+    computedSelects: SelectQuery[] = [];
+
     /**
      * Whether SELECT is DISTINCT.
      */
