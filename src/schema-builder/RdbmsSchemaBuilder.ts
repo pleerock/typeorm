@@ -75,6 +75,11 @@ export class RdbmsSchemaBuilder implements SchemaBuilder {
             //  Remove condition or add new conditions if necessary (for CHECK constraints for example).
             if (this.viewEntityToSyncMetadatas.length > 0)
                 await this.createTypeormMetadataTable();
+            if (this.connection.driver instanceof PostgresDriver) {
+                if (await this.connection.driver.isGeneratedColumnsSupported(this.queryRunner)) {
+                    await this.createTypeormGeneratedMetadataTable();
+                }
+            }
             await this.queryRunner.getTables(tablePaths);
             await this.queryRunner.getViews([]);
             await this.executeSchemaSyncOperationsInProperOrder();
@@ -792,6 +797,36 @@ export class RdbmsSchemaBuilder implements SchemaBuilder {
         ), true);
     }
 
+    /**
+     * Creates typeorm service table for storing user defined generated columns as expressions.
+     */
+    protected async createTypeormGeneratedMetadataTable() {
+        const options = <PostgresConnectionOptions>this.connection.driver.options;
+        const typeormMetadataTable = this.connection.driver.buildTableName("typeorm_generation_meta", options.schema, options.database);
+
+        await this.queryRunner.createTable(new Table(
+            {
+                name: typeormMetadataTable,
+                columns: [
+                    {
+                        name: "table_name",
+                        type: this.connection.driver.normalizeType({type: this.connection.driver.mappedDataTypes.metadataType}),
+                        isNullable: false,
+                    },
+                    {
+                        name: "column_name",
+                        type: this.connection.driver.normalizeType({type: this.connection.driver.mappedDataTypes.metadataDatabase}),
+                        isNullable: false
+                    },
+                    {
+                        name: "generation_expression",
+                        type: this.connection.driver.normalizeType({type: this.connection.driver.mappedDataTypes.metadataValue}),
+                        isNullable: true
+                    },
+                ]
+            },
+        ), true);
+    }
 }
 
 function foreignKeysMatch(

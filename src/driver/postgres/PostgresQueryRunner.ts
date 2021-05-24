@@ -392,6 +392,17 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
             }
         }
 
+        // if table have column with generated type, we must add the expression to the meta table
+        await Promise.all(table.columns
+            .filter(column => column.generatedType === "STORED" && column.asExpression)
+            .map(async column => {
+                const tableName = await this.getTableNameWithSchema(table.name);
+                const deleteQuery = new Query(`DELETE FROM typeorm_generation_meta WHERE table_name = $1 AND column_name = $2`, [tableName, column.name]);
+                upQueries.push(deleteQuery);
+                upQueries.push(new Query(`INSERT INTO typeorm_generation_meta(table_name, column_name, generation_expression) VALUES ($1, $2, $3)`, [tableName, column.name, column.asExpression]));
+                downQueries.push(deleteQuery);
+            }));
+
         upQueries.push(this.createTableSql(table, createForeignKeys));
         downQueries.push(this.dropTableSql(table));
 
@@ -628,6 +639,14 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
             downQueries.push(new Query(`ALTER TABLE ${this.escapePath(table)} DROP CONSTRAINT "${uniqueConstraint.name}"`));
         }
 
+        if (column.generatedType === "STORED" && column.asExpression) {
+            const tableName = await this.getTableNameWithSchema(table.name);
+            const deleteQuery = new Query(`DELETE FROM typeorm_generation_meta WHERE table_name = $1 AND column_name = $2`, [tableName, column.name]);
+            upQueries.push(deleteQuery);
+            upQueries.push(new Query(`INSERT INTO typeorm_generation_meta(table_name, column_name, generation_expression) VALUES ($1, $2, $3)`, [tableName, column.name, column.asExpression]));
+            downQueries.push(deleteQuery);
+        }
+
         // create column's comment
         if (column.comment) {
             upQueries.push(new Query(`COMMENT ON COLUMN ${this.escapePath(table)}."${column.name}" IS ${this.escapeComment(column.comment)}`));
@@ -685,7 +704,12 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
         if (!oldColumn)
             throw new Error(`Column "${oldTableColumnOrName}" was not found in the "${table.name}" table.`);
 
-        if (oldColumn.type !== newColumn.type || oldColumn.length !== newColumn.length || newColumn.isArray !== oldColumn.isArray) {
+     
+        if (oldColumn.type !== newColumn.type 
+            || oldColumn.length !== newColumn.length 
+            || newColumn.isArray !== oldColumn.isArray
+            || (!oldColumn.generatedType && newColumn.generatedType === "STORED")
+            || (oldColumn.asExpression !== newColumn.asExpression && newColumn.generatedType === "STORED")) {
             // To avoid data conversion, we just recreate column
             await this.dropColumn(table, oldColumn);
             await this.addColumn(table, newColumn);
@@ -969,6 +993,24 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
                 downQueries.push(new Query(`ALTER TABLE ${this.escapePath(table)} ALTER COLUMN "${newColumn.name}" TYPE ${this.driver.createFullType(oldColumn)}`));
             }
 
+            if (newColumn.generatedType !== oldColumn.generatedType) {
+                // Convert generated column data to normal column
+                if (!newColumn.generatedType || newColumn.generatedType === "VIRTUAL") {
+                    // We can copy the generated data to the new column
+                    const tableName = await this.getTableNameWithSchema(table.name);
+                    upQueries.push(new Query(`ALTER TABLE ${this.escapePath(table)} RENAME COLUMN "${oldColumn.name}" TO "TEMP_OLD_${oldColumn.name}"`));
+                    upQueries.push(new Query(`ALTER TABLE ${this.escapePath(table)} ADD ${this.buildCreateColumnSql(table, newColumn)}`));
+                    upQueries.push(new Query(`UPDATE ${this.escapePath(table)} SET "${newColumn.name}" = "TEMP_OLD_${oldColumn.name}"`));
+                    upQueries.push(new Query(`ALTER TABLE ${this.escapePath(table)} DROP COLUMN "TEMP_OLD_${oldColumn.name}"`));
+                    upQueries.push(new Query(`DELETE FROM typeorm_generation_meta WHERE table_name = $1 AND column_name = $2`, [tableName, oldColumn.name]));
+                    // However, we can't copy it back on downgrade. It needs to regenerate.
+                    downQueries.push(new Query(`ALTER TABLE ${this.escapePath(table)} DROP COLUMN "${newColumn.name}"`));
+                    downQueries.push(new Query(`ALTER TABLE ${this.escapePath(table)} ADD ${this.buildCreateColumnSql(table, oldColumn)}`));
+                    downQueries.push(new Query(`DELETE FROM typeorm_generation_meta WHERE table_name = $1 AND column_name = $2`, [tableName, newColumn.name]));
+                    downQueries.push(new Query(`INSERT INTO typeorm_generation_meta(table_name, column_name, generation_expression) VALUES ($1, $2, $3)`, [tableName, oldColumn.name, oldColumn.asExpression]));
+                }
+            }
+
         }
 
         await this.executeQueries(upQueries, downQueries);
@@ -1053,6 +1095,12 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
                 upQueries.push(this.dropEnumTypeSql(table, column, escapedEnumName));
                 downQueries.push(this.createEnumTypeSql(table, column, escapedEnumName));
             }
+        }
+
+        if (column.generatedType === "STORED") {
+            const tableName = await this.getTableNameWithSchema(table.name);
+            upQueries.push(new Query(`DELETE FROM typeorm_generation_meta WHERE table_name = $1 AND column_name = $2`, [tableName, column.name]));
+            downQueries.push(new Query(`INSERT INTO typeorm_generation_meta(table_name, column_name, generation_expression) VALUES ($1, $2, $3)`, [tableName, column.name, column.asExpression]));
         }
 
         await this.executeQueries(upQueries, downQueries);
@@ -1735,6 +1783,19 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
                         }
                     }
 
+                    if (dbColumn["is_generated"] === "ALWAYS" && dbColumn["generation_expression"]) {
+                        // In postgres there is no VIRTUAL generated column type
+                        tableColumn.generatedType = "STORED";
+                        // We cannot relay on information_schema.columns.generation_expression, because it is formatted different.
+                        const asExpressionQuery = `SELECT * FROM typeorm_generation_meta WHERE table_name = '${await this.getTableNameWithSchema(tableFullName)}' and column_name = '${tableColumn.name}'`;
+                        const results: ObjectLiteral[] = await this.query(asExpressionQuery);
+                        if (results[0] && results[0].generation_expression) {
+                            tableColumn.asExpression = results[0].generation_expression;
+                        } else {
+                            tableColumn.asExpression = "";
+                        }
+                    }
+
                     tableColumn.comment = dbColumn["description"] ? dbColumn["description"] : undefined;
                     if (dbColumn["character_set_name"])
                         tableColumn.charset = dbColumn["character_set_name"];
@@ -2259,6 +2320,21 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
     }
 
     /**
+     * Get the table name with table schema
+     * Note: Without ' or "
+     */
+    protected async getTableNameWithSchema(target: Table|string) {
+        const tableName = target instanceof Table ? target.name : target;
+        if (tableName.indexOf(".") === -1) {
+            const schemaResult = await this.query(`SELECT current_schema()`);
+            const schema = schemaResult[0]["current_schema"];
+            return `${schema}.${tableName}`;
+        } else {
+            return `${tableName.split(".")[0]}.${tableName.split(".")[1]}`;
+        }
+    }
+
+    /**
      * Builds a query for create column.
      */
     protected buildCreateColumnSql(table: Table, column: TableColumn) {
@@ -2279,16 +2355,22 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
         } else if (!column.isGenerated || column.type === "uuid") {
             c += " " + this.connection.driver.createFullType(column);
         }
-        if (column.charset)
-            c += " CHARACTER SET \"" + column.charset + "\"";
-        if (column.collation)
-            c += " COLLATE \"" + column.collation + "\"";
-        if (column.isNullable !== true)
-            c += " NOT NULL";
-        if (column.default !== undefined && column.default !== null)
-            c += " DEFAULT " + column.default;
-        if (column.isGenerated && column.generationStrategy === "uuid" && !column.default)
-            c += ` DEFAULT ${this.driver.uuidGenerator}`;
+        // CHARACTER SET, COLLATE, NOT NULL and DEFAULT do not exist on generated (virtual) columns
+        // Also, postgres only supports the stored generated column type
+        if (column.generatedType === "STORED" && column.asExpression) {
+            c += ` GENERATED ALWAYS AS (${column.asExpression}) STORED`;
+        } else {
+            if (column.charset)
+                c += " CHARACTER SET \"" + column.charset + "\"";
+            if (column.collation)
+                c += " COLLATE \"" + column.collation + "\"";
+            if (column.isNullable !== true)
+                c += " NOT NULL";
+            if (column.default !== undefined && column.default !== null)
+                c += " DEFAULT " + column.default;
+            if (column.isGenerated && column.generationStrategy === "uuid" && !column.default)
+                c += ` DEFAULT ${this.driver.uuidGenerator}`;
+        }
 
         return c;
     }

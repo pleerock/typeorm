@@ -50,6 +50,19 @@ services:
       POSTGRES_PASSWORD: "test"
       POSTGRES_DB: "test"
 
+  postgres-12:
+    # mdillon/postgis is postgres + PostGIS (only). if you need additional
+    # extensions, it's probably time to create a purpose-built image with all
+    # necessary extensions. sorry, and thanks for adding support for them!
+    image: "postgis/postgis:12-2.5"
+    container_name: "typeorm-postgres-12"
+    ports:
+      - "5532:5432"
+    environment:
+      POSTGRES_USER: "test"
+      POSTGRES_PASSWORD: "test"
+      POSTGRES_DB: "test"
+
   # mssql
   mssql:
     image: "mcr.microsoft.com/mssql/server:2017-latest-ubuntu"

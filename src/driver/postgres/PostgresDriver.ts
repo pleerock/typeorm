@@ -19,6 +19,7 @@ import {EntityMetadata} from "../../metadata/EntityMetadata";
 import {OrmUtils} from "../../util/OrmUtils";
 import {ApplyValueTransformers} from "../../util/ApplyValueTransformers";
 import {ReplicationMode} from "../types/ReplicationMode";
+import {VersionUtils} from "../../util/VersionUtils";
 
 /**
  * Organizes communication with PostgreSQL DBMS.
@@ -890,7 +891,9 @@ export class PostgresDriver implements Driver {
                 || (tableColumn.enum && columnMetadata.enum && !OrmUtils.isArraysEqual(tableColumn.enum, columnMetadata.enum.map(val => val + ""))) // enums in postgres are always strings
                 || tableColumn.isGenerated !== columnMetadata.isGenerated
                 || (tableColumn.spatialFeatureType || "").toLowerCase() !== (columnMetadata.spatialFeatureType || "").toLowerCase()
-                || tableColumn.srid !== columnMetadata.srid;
+                || tableColumn.srid !== columnMetadata.srid
+                || tableColumn.generatedType !== columnMetadata.generatedType
+                || (tableColumn.asExpression || "").trim() !== (columnMetadata.asExpression || "").trim();
 
             // DEBUG SECTION
             // if (isColumnChanged) {
@@ -940,6 +943,15 @@ export class PostgresDriver implements Driver {
      */
     isUUIDGenerationSupported(): boolean {
         return true;
+    }
+
+    /**
+     * Returns true if postgres supports generated columns
+     */
+    async isGeneratedColumnsSupported(runner: QueryRunner): Promise<boolean> {
+        const results = await runner.query("SHOW server_version;", []);
+        const versionString = results[0]["server_version"] as string;
+        return VersionUtils.isGreaterOrEqual(versionString, '12.0');
     }
 
     /**

@@ -128,7 +128,7 @@ jobs:
 
             docker-compose --project-name typeorm --no-ansi up --detach $SERVICES
       - install-packages:
-         cache-key: node<< parameters.node-version >>
+          cache-key: node<< parameters.node-version >>
       - run:
           name: Set up TypeORM Test Runner
           command: |
@@ -212,4 +212,11 @@ workflows:
             - lint
             - build
           databases: "oracle"
+          node-version: "12"
+      - test:
+          name: test (postgres 12) - Node v12
+          requires:
+            - lint
+            - build
+          databases: "postgres-12"
           node-version: "12"
