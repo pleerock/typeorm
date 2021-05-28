@@ -151,7 +151,9 @@ export class DbQueryResultCache implements QueryResultCache {
      * Stores given query result in the cache.
      */
     async storeInCache(options: QueryResultCacheOptions, savedCache: QueryResultCacheOptions|undefined, queryRunner?: QueryRunner): Promise<void> {
-        queryRunner = this.getQueryRunner(queryRunner);
+        if (queryRunner === undefined || queryRunner?.getReplicationMode() === "slave") {
+            queryRunner = this.connection.createQueryRunner();
+        }
 
         let insertedValues: ObjectLiteral = options;
         if (this.connection.driver instanceof SqlServerDriver) { // todo: bad abstraction, re-implement this part, probably better if we create an entity metadata for cache table

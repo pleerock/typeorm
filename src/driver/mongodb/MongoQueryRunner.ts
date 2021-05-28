@@ -46,6 +46,7 @@ import {TableUnique} from "../../schema-builder/table/TableUnique";
 import {Broadcaster} from "../../subscriber/Broadcaster";
 import {TableCheck} from "../../schema-builder/table/TableCheck";
 import {TableExclusion} from "../../schema-builder/table/TableExclusion";
+import {ReplicationMode} from "../types/ReplicationMode";
 
 /**
  * Runs queries on a single MongoDB connection.
@@ -504,6 +505,10 @@ export class MongoQueryRunner implements QueryRunner {
      */
     async getViews(collectionNames: string[]): Promise<View[]> {
         throw new Error(`Schema update queries are not supported by MongoDB driver.`);
+    }
+    
+    getReplicationMode(): ReplicationMode {
+        return 'master';
     }
 
     /**
