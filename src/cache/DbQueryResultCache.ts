@@ -151,8 +151,10 @@ export class DbQueryResultCache implements QueryResultCache {
      * Stores given query result in the cache.
      */
     async storeInCache(options: QueryResultCacheOptions, savedCache: QueryResultCacheOptions|undefined, queryRunner?: QueryRunner): Promise<void> {
-        if (queryRunner === undefined || queryRunner?.getReplicationMode() === "slave") {
-            queryRunner = this.connection.createQueryRunner();
+        const shouldCreateQueryRunner = queryRunner === undefined || queryRunner?.getReplicationMode() === "slave";
+
+        if (queryRunner === undefined || shouldCreateQueryRunner) {
+            queryRunner = this.connection.createQueryRunner("master");
         }
 
         let insertedValues: ObjectLiteral = options;
@@ -197,6 +199,10 @@ export class DbQueryResultCache implements QueryResultCache {
                 .into(this.queryResultCacheTable)
                 .values(insertedValues)
                 .execute();
+        }
+
+        if (shouldCreateQueryRunner) {
+            await queryRunner.release();
         }
     }
 
