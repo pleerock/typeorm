@@ -125,7 +125,7 @@ export class User {
 }
 ```
 
-* `@PrimaryGeneratedColumn()` creates a primary column which value will be automatically generated with an auto-increment value. It will create `int` column with `auto-increment`/`serial`/`sequence` (depend on the database). You don't have to manually assign its value before save - value will be automatically generated.
+* `@PrimaryGeneratedColumn()` creates a primary column which value will be automatically generated with an auto-increment value. It will create `int` column with `auto-increment`/`serial`/`sequence`/`identity` (depend on the database and configuration provided). You don't have to manually assign its value before save - value will be automatically generated.
 
 ```typescript
 import {Entity, PrimaryGeneratedColumn} from "typeorm";
@@ -196,13 +196,13 @@ There are several special column types with additional functionality available:
 * `@CreateDateColumn` is a special column that is automatically set to the entity's insertion date.
 You don't need to set this column - it will be automatically set.
 
-* `@UpdateDateColumn` is a special column that is automatically set to the entity's update time 
+* `@UpdateDateColumn` is a special column that is automatically set to the entity's update time
 each time you call `save` of entity manager or repository.
 You don't need to set this column - it will be automatically set.
 
 * `@DeleteDateColumn` is a special column that is automatically set to the entity's delete time each time you call soft-delete of entity manager or repository. You don't need to set this column - it will be automatically set. If the @DeleteDateColumn is set, the default scope will be "non-deleted".
 
-* `@VersionColumn` is a special column that is automatically set to the version of the entity (incremental number)  
+* `@VersionColumn` is a special column that is automatically set to the version of the entity (incremental number)
 each time you call `save` of entity manager or repository.
 You don't need to set this column - it will be automatically set.
 
@@ -524,7 +524,7 @@ export class User {
 
 `uuid` value will be automatically generated and stored into the database.
 
-Besides "uuid" there is also "increment" and "rowid" (CockroachDB only) generated types, however there are some limitations
+Besides "uuid" there is also "increment" "identity" (Postgres 10+ only) and "rowid" (CockroachDB only) generated types, however there are some limitations
 on some database platforms with this type of generation (for example some databases can only have one increment column,
 or some of them require increment to be a primary key).
 
