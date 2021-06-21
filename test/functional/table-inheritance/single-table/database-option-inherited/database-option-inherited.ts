@@ -15,9 +15,10 @@ describe("table-inheritance > single-table > database-option-inherited", () => {
 
     it("should correctly inherit database option", () => Promise.all(connections.map(async connection => {
 
-        connection.entityMetadatas.forEach(metadata =>
-            metadata.database!.should.equal("test"));
+        connection.entityMetadatas.forEach(metadata => {
+            if ((<any>connection.options).skip) return
+            metadata.database!.should.equal("test");
+        })
 
     })));
-
 });

@@ -114,3 +114,24 @@ export function hash(input: string, options: IHashOptions = {}): string {
 
     return hashedInput;
   }
+
+/**
+ escapePath takes a "dot format" string and escapes each segment with given delimiter
+ Tolerates leading/trailing dots
+
+ @remarks
+
+ @example
+```ts
+ import {escapePath} from 'escapePath'
+ escapePath("someDB.someSchema.someTable", false, '"') // `"someDB"."someSchema"."someTable"`
+ escapePath("something") // `"something"`
+ escapePath("something", true) // `something`
+ escapePath(".something.else", false, "'") // `'something'.'else'`
+```
+ */
+export function escapePath(pathStr: string, disableEscape: boolean = false, delimiter = '"'): string {
+    return pathStr.replace(/^\.+|\.+$/g, "").split(".").map(i => {
+        return disableEscape ? i : `${delimiter}${i}${delimiter}`;
+    }).join(".");
+}

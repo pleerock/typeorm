@@ -24,6 +24,7 @@ import {TableExclusion} from "../../schema-builder/table/TableExclusion";
 import {VersionUtils} from "../../util/VersionUtils";
 import {ReplicationMode} from "../types/ReplicationMode";
 import {BroadcasterResult} from "../../subscriber/BroadcasterResult";
+import { escapePath } from '../../util/StringUtils';
 
 /**
  * Runs queries on a single mysql database connection.
@@ -1837,7 +1838,7 @@ export class MysqlQueryRunner extends BaseQueryRunner implements QueryRunner {
      */
     protected escapePath(target: Table|View|string, disableEscape?: boolean): string {
         const tableName = target instanceof Table || target instanceof View ? target.name : target;
-        return tableName.split(".").map(i => disableEscape ? i : `\`${i}\``).join(".");
+        return escapePath(tableName, disableEscape, "`");
     }
 
     /**

@@ -11,25 +11,25 @@
   },
   "main": "./index.js",
   "browser": {
-    "./browser/driver/aurora-data-api/AuroraDataApiDriver.js": "./browser/platform/BrowserDisabledDriversDummy.js",
-    "./browser/driver/cockroachdb/CockroachDriver.js": "./browser/platform/BrowserDisabledDriversDummy.js",
-    "./browser/driver/postgres/PostgresDriver.js": "./browser/platform/BrowserDisabledDriversDummy.js",
-    "./browser/driver/oracle/OracleDriver.ts": "./browser/platform/BrowserDisabledDriversDummy.js",
-    "./browser/driver/sap/SapDriver.ts": "./browser/platform/BrowserDisabledDriversDummy.js",
-    "./browser/driver/mysql/MysqlDriver.js": "./browser/platform/BrowserDisabledDriversDummy.js",
-    "./browser/driver/sqlserver/SqlServerDriver.ts": "./browser/platform/BrowserDisabledDriversDummy.js",
-    "./browser/driver/mongodb/MongoDriver.js": "./browser/platform/BrowserDisabledDriversDummy.js",
-    "./browser/driver/mongodb/MongoQueryRunner.js": "./browser/platform/BrowserDisabledDriversDummy.js",
-    "./browser/entity-manager/MongoEntityManager.js": "./browser/platform/BrowserDisabledDriversDummy.js",
-    "./browser/repository/MongoRepository.js": "./browser/platform/BrowserDisabledDriversDummy.js",
-    "./browser/driver/sqlite/SqliteDriver.js": "./browser/platform/BrowserDisabledDriversDummy.js",
-    "./browser/driver/better-sqlite3/BetterSqlite3Driver.js": "./browser/platform/BrowserDisabledDriversDummy.js",
-    "./browser/util/DirectoryExportedClassesLoader.js": "./browser/platform/BrowserDirectoryExportedClassesLoader.js",
-    "./browser/logger/FileLogger.js": "./browser/platform/BrowserFileLoggerDummy.js",
     "./browser/connection/ConnectionOptionsReader.js": "./browser/platform/BrowserConnectionOptionsReaderDummy.js",
     "./browser/connection/options-reader/ConnectionOptionsXmlReader.js": "./browser/platform/BrowserConnectionOptionsReaderDummy.js",
     "./browser/connection/options-reader/ConnectionOptionsYmlReader.js": "./browser/platform/BrowserConnectionOptionsReaderDummy.js",
+    "./browser/driver/aurora-data-api/AuroraDataApiDriver.js": "./browser/platform/BrowserDisabledDriversDummy.js",
+    "./browser/driver/better-sqlite3/BetterSqlite3Driver.js": "./browser/platform/BrowserDisabledDriversDummy.js",
+    "./browser/driver/cockroachdb/CockroachDriver.js": "./browser/platform/BrowserDisabledDriversDummy.js",
+    "./browser/driver/mongodb/MongoDriver.js": "./browser/platform/BrowserDisabledDriversDummy.js",
+    "./browser/driver/mongodb/MongoQueryRunner.js": "./browser/platform/BrowserDisabledDriversDummy.js",
+    "./browser/driver/mysql/MysqlDriver.js": "./browser/platform/BrowserDisabledDriversDummy.js",
+    "./browser/driver/oracle/OracleDriver.ts": "./browser/platform/BrowserDisabledDriversDummy.js",
+    "./browser/driver/postgres/PostgresDriver.js": "./browser/platform/BrowserDisabledDriversDummy.js",
+    "./browser/driver/sap/SapDriver.ts": "./browser/platform/BrowserDisabledDriversDummy.js",
+    "./browser/driver/sqlite/SqliteDriver.js": "./browser/platform/BrowserDisabledDriversDummy.js",
+    "./browser/driver/sqlserver/SqlServerDriver.ts": "./browser/platform/BrowserDisabledDriversDummy.js",
+    "./browser/entity-manager/MongoEntityManager.js": "./browser/platform/BrowserDisabledDriversDummy.js",
+    "./browser/logger/FileLogger.js": "./browser/platform/BrowserFileLoggerDummy.js",
     "./browser/platform/PlatformTools.js": "./browser/platform/BrowserPlatformTools.js",
+    "./browser/repository/MongoRepository.js": "./browser/platform/BrowserDisabledDriversDummy.js",
+    "./browser/util/DirectoryExportedClassesLoader.js": "./browser/platform/BrowserDirectoryExportedClassesLoader.js",
     "./index.js": "./browser/index.js"
   },
   "repository": {
@@ -145,12 +145,16 @@
     "test-fast": "mocha --file ./build/compiled/test/utils/test-setup.js --bail --recursive --timeout 60000 ./build/compiled/test",
     "compile": "rimraf ./build && tsc",
     "watch": "./node_modules/.bin/tsc -w",
+    "prepack": "gulp package",
     "package": "gulp package",
     "lint": "eslint -c ./.eslintrc.js src/**/*.ts test/**/*.ts sample/**/*.ts",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 2"
   },
-  "bin": {
-    "typeorm": "./cli.js"
+  "bin": "./cli.js",
+  "publishConfig": {
+    "access": "public",
+    "main": "build/package/index.js",
+    "bin": "build/package/cli.js"
   },
   "funding": "https://opencollective.com/typeorm",
   "collective": {
@@ -158,6 +162,7 @@
     "url": "https://opencollective.com/typeorm",
     "logo": "https://opencollective.com/opencollective/logo.txt"
   },
+  "types": "build/package/index.d.ts",
   "nyc": {
     "all": true,
     "cache": false,

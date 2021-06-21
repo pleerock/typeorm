@@ -52,5 +52,4 @@ describe("indices > conditional index", () => {
         await queryRunner.release();
 
     })));
-
 });

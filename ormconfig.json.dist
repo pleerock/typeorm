@@ -47,6 +47,12 @@
     "logging": false
   },
   {
+    "skip": false,
+    "name": "sqljs",
+    "type": "sqljs",
+    "logging": false
+  },
+  {
     "skip": true,
     "name": "mssql",
     "type": "mssql",

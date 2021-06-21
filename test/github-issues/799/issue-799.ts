@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import * as assert from "assert";
-import {createConnection} from "../../../src/index";
+import {createConnection, getConnectionOptions} from "../../../src/index";
 import rimraf from "rimraf";
 import {dirname} from "path";
 import {Connection} from "../../../src/connection/Connection";
@@ -25,6 +25,9 @@ describe("github issues > #799 sqlite: 'database' path should be created", () =>
     });
 
     it("should create the whole path to database file", async function () {
+        const options = await getConnectionOptions("sqlite");
+        if ((<any>options).skip) return
+
         connection = await createConnection({
             "name": "sqlite",
             "type": "sqlite",
@@ -35,6 +38,9 @@ describe("github issues > #799 sqlite: 'database' path should be created", () =>
     });
 
     it("should create the whole path to database file for better-sqlite3", async function () {
+        const options = await getConnectionOptions("better-sqlite3");
+        if ((<any>options).skip) return
+
         connection = await createConnection({
             "name": "better-sqlite3",
             "type": "better-sqlite3",

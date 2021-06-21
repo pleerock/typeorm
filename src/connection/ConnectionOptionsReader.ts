@@ -4,6 +4,7 @@ import {PlatformTools} from "../platform/PlatformTools";
 import {ConnectionOptionsEnvReader} from "./options-reader/ConnectionOptionsEnvReader";
 import {ConnectionOptionsYmlReader} from "./options-reader/ConnectionOptionsYmlReader";
 import {ConnectionOptionsXmlReader} from "./options-reader/ConnectionOptionsXmlReader";
+import { isAbsolute } from "../util/PathUtils";
 
 /**
  * Reads connection options from the ormconfig.
@@ -144,6 +145,9 @@ export class ConnectionOptionsReader {
             connectionOptions = [connectionOptions];
 
         connectionOptions.forEach(options => {
+
+            options.baseDirectory = this.baseDirectory;
+
             if (options.entities) {
                 const entities = (options.entities as any[]).map(entity => {
                     if (typeof entity === "string" && entity.substr(0, 1) !== "/")
@@ -172,11 +176,10 @@ export class ConnectionOptionsReader {
                 Object.assign(connectionOptions, { migrations: migrations });
             }
 
-            // make database path file in sqlite relative to package.json
+            // make database path file absolute in sqlite
             if (options.type === "sqlite" || options.type === "better-sqlite3") {
                 if (typeof options.database === "string" &&
-                    options.database.substr(0, 1) !== "/" &&  // unix absolute
-                    options.database.substr(1, 2) !== ":\\" && // windows absolute
+                    !isAbsolute(options.database) &&
                     options.database !== ":memory:") {
                     Object.assign(options, {
                         database: this.baseDirectory + "/" + options.database

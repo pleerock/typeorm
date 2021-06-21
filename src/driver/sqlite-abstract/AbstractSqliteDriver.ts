@@ -15,6 +15,11 @@ import {OrmUtils} from "../../util/OrmUtils";
 import {ApplyValueTransformers} from "../../util/ApplyValueTransformers";
 import {ReplicationMode} from "../types/ReplicationMode";
 
+type DatabasesMap = Record<string, {
+    attachFilepath: string
+    attachHandle: string
+}>;
+
 /**
  * Organizes communication with sqlite DBMS.
  */
@@ -38,6 +43,11 @@ export abstract class AbstractSqliteDriver implements Driver {
      * Real database connection with sqlite database.
      */
     databaseConnection: any;
+
+    /**
+     * Any attached databases (excepting default 'main')
+     */
+    attachedDatabases: DatabasesMap = {};
 
     // -------------------------------------------------------------------------
     // Public Implemented Properties
@@ -614,6 +624,10 @@ export abstract class AbstractSqliteDriver implements Driver {
         // return "$" + (index + 1);
         return "?";
         // return "$" + parameterName;
+    }
+
+    hasAttachedDatabases(): boolean {
+        return !!Object.keys(this.attachedDatabases).length
     }
 
     // -------------------------------------------------------------------------

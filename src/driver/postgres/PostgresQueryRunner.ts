@@ -23,6 +23,7 @@ import {IsolationLevel} from "../types/IsolationLevel";
 import {PostgresDriver} from "./PostgresDriver";
 import {ReplicationMode} from "../types/ReplicationMode";
 import {BroadcasterResult} from "../../subscriber/BroadcasterResult";
+import { escapePath } from '../../util/StringUtils';
 
 /**
  * Runs queries on a single postgres database connection.
@@ -2234,10 +2235,7 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
     protected escapePath(target: Table|View|string, disableEscape?: boolean): string {
         let tableName = target instanceof Table || target instanceof View ? target.name : target;
         tableName = tableName.indexOf(".") === -1 && this.driver.options.schema ? `${this.driver.options.schema}.${tableName}` : tableName;
-
-        return tableName.split(".").map(i => {
-            return disableEscape ? i : `"${i}"`;
-        }).join(".");
+        return escapePath(tableName, disableEscape);
     }
 
     /**

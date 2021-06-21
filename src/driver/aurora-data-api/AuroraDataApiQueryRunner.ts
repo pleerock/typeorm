@@ -21,6 +21,7 @@ import {TableCheck} from "../../schema-builder/table/TableCheck";
 import {IsolationLevel} from "../types/IsolationLevel";
 import {TableExclusion} from "../../schema-builder/table/TableExclusion";
 import {BroadcasterResult} from "../../subscriber/BroadcasterResult";
+import { escapePath } from '../../util/StringUtils';
 
 /**
  * Runs queries on a single mysql database connection.
@@ -1637,7 +1638,7 @@ export class AuroraDataApiQueryRunner extends BaseQueryRunner implements QueryRu
      */
     protected escapePath(target: Table|View|string, disableEscape?: boolean): string {
         const tableName = target instanceof Table || target instanceof View ? target.name : target;
-        return tableName.split(".").map(i => disableEscape ? i : `\`${i}\``).join(".");
+        return escapePath(tableName, disableEscape, "`");
     }
 
     /**

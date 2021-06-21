@@ -310,7 +310,7 @@ export class Table {
                 .map(column => TableUtils.createTableColumnOptions(column, driver)),
             indices: entityMetadata.indices
                 .filter(index => index.synchronize === true)
-                .map(index => TableIndex.create(index)),
+                .map(index => TableIndex.create(index, driver)),
             uniques: entityMetadata.uniques.map(unique => TableUnique.create(unique)),
             checks: entityMetadata.checks.map(check => TableCheck.create(check)),
             exclusions: entityMetadata.exclusions.map(exclusion => TableExclusion.create(exclusion)),

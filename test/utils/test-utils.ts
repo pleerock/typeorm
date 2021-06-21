@@ -8,6 +8,7 @@ import {createConnections} from "../../src/index";
 import {NamingStrategyInterface} from "../../src/naming-strategy/NamingStrategyInterface";
 import {QueryResultCache} from "../../src/cache/QueryResultCache";
 import {Logger} from "../../src/logger/Logger";
+import path from "path";
 
 /**
  * Interface in which data is stored in ormconfig.json of the project.
@@ -163,25 +164,26 @@ export function setupSingleTestingConnection(driverType: DatabaseType, options: 
     return testingConnections[0];
 }
 
-
-/**
- * Loads test connection options from ormconfig.json file.
- */
-export function getTypeOrmConfig(): TestingConnectionOptions[] {
+function getOrmFilepath(): string {
     try {
-
         try {
-            return require(__dirname + "/../../../../ormconfig.json");
+            return require.resolve(__dirname + "/../../../../ormconfig.json");
 
         } catch (err) {
-            return require(__dirname + "/../../ormconfig.json");
+            return require.resolve(__dirname + "/../../ormconfig.json");
         }
-
     } catch (err) {
         throw new Error(`Cannot find ormconfig.json file in the root of the project. To run tests please create ormconfig.json file` +
             ` in the root of the project (near ormconfig.json.dist, you need to copy ormconfig.json.dist into ormconfig.json` +
             ` and change all database settings to match your local environment settings).`);
     }
+}
+
+/**
+ * Loads test connection options from ormconfig.json file.
+ */
+export function getTypeOrmConfig(): TestingConnectionOptions[] {
+    return require(getOrmFilepath());
 }
 
 /**
@@ -232,6 +234,7 @@ export function setupTestingConnections(options?: TestingOptions): ConnectionOpt
                 newOptions.migrations = [options.__dirname + "/migration/*{.js,.ts}"];
             if (options && options.namingStrategy)
                 newOptions.namingStrategy = options.namingStrategy;
+            newOptions.baseDirectory = path.dirname(getOrmFilepath());
             return newOptions;
         });
 }

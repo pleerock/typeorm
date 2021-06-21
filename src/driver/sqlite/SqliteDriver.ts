@@ -10,6 +10,8 @@ import { ColumnType } from "../types/ColumnTypes";
 import { QueryRunner } from "../../query-runner/QueryRunner";
 import { AbstractSqliteDriver } from "../sqlite-abstract/AbstractSqliteDriver";
 import {ReplicationMode} from "../types/ReplicationMode";
+import {filepathToName, isAbsolute} from "../../util/PathUtils"
+
 
 /**
  * Organizes communication with sqlite DBMS.
@@ -53,6 +55,10 @@ export class SqliteDriver extends AbstractSqliteDriver {
     // Public Methods
     // -------------------------------------------------------------------------
 
+    async afterConnect(): Promise<void> {
+        return this.attachDatabases();
+    }
+
     /**
      * Closes connection with database.
      */
@@ -81,6 +87,29 @@ export class SqliteDriver extends AbstractSqliteDriver {
         return super.normalizeType(column);
     }
 
+    /**
+     * For SQLite, the database may be added in the decorator metadata. It will be a filepath to a database file.
+     */
+    buildTableName(tableName: string, _schema?: string, database?: string): string {
+
+        if (!database) return tableName;
+        if (this.attachedDatabases[database]) return `${this.attachedDatabases[database].attachHandle}.${tableName}`;
+
+        if (database === this.options.database) return tableName;
+
+        // we use the decorated name as supplied when deriving attach handle (ideally without non-portable absolute path)
+        const identifierHash = filepathToName(database);
+        // decorated name will be assumed relative to main database file when non absolute. Paths supplied as absolute won't be portable
+        const absFilepath = isAbsolute(database) ? database : path.join(this.getMainDatabasePath(), database);
+
+        this.attachedDatabases[database] = {
+            attachFilepath: absFilepath,
+            attachHandle: identifierHash,
+        };
+
+        return `${identifierHash}.${tableName}`;
+    }
+
     // -------------------------------------------------------------------------
     // Protected Methods
     // -------------------------------------------------------------------------
@@ -89,7 +118,9 @@ export class SqliteDriver extends AbstractSqliteDriver {
      * Creates connection with the database.
      */
     protected async createDatabaseConnection() {
-        await this.createDatabaseDirectory(this.options.database);
+        // not to create database directory if is in memory
+        if (this.options.database !== ":memory:")
+            await this.createDatabaseDirectory(this.getMainDatabasePath());
 
         const databaseConnection: any = await new Promise((ok, fail) => {
             const connection = new this.sqlite.Database(this.options.database, (err: any) => {
@@ -139,8 +170,27 @@ export class SqliteDriver extends AbstractSqliteDriver {
     /**
      * Auto creates database directory if it does not exist.
      */
-    protected async createDatabaseDirectory(fullPath: string): Promise<void> {
-        await mkdirp(path.dirname(fullPath));
+    protected async createDatabaseDirectory(dbPath: string): Promise<void> {
+        await mkdirp(dbPath);
     }
 
+    /**
+     * Performs the attaching of the database files. The attachedDatabase should have been populated during calls to #buildTableName
+     * during EntityMetadata production (see EntityMetadata#buildTablePath)
+     *
+     * https://sqlite.org/lang_attach.html
+     */
+    protected async attachDatabases() {
+
+        // @todo - possibly check number of databases (but unqueriable at runtime sadly) - https://www.sqlite.org/limits.html#max_attached
+        for await (const {attachHandle, attachFilepath} of Object.values(this.attachedDatabases)) {
+            await this.createDatabaseDirectory(path.dirname(attachFilepath));
+            await this.connection.query(`ATTACH "${attachFilepath}" AS "${attachHandle}"`);
+        }
+    }
+
+    protected getMainDatabasePath(): string {
+        const optionsDb = this.options.database;
+        return path.dirname(isAbsolute(optionsDb) ? optionsDb : path.join(this.options.baseDirectory!, optionsDb));
+    }
 }

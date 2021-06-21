@@ -19,6 +19,7 @@ import {OrmUtils} from "../../util/OrmUtils";
 import {TableCheck} from "../../schema-builder/table/TableCheck";
 import {IsolationLevel} from "../types/IsolationLevel";
 import {TableExclusion} from "../../schema-builder/table/TableExclusion";
+import { escapePath } from '../../util/StringUtils';
 
 /**
  * Runs queries on a single sqlite database connection.
@@ -202,7 +203,7 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
      */
     async hasColumn(tableOrName: Table|string, columnName: string): Promise<boolean> {
         const tableName = tableOrName instanceof Table ? tableOrName.name : tableOrName;
-        const sql = `PRAGMA table_info("${tableName}")`;
+        const sql = `PRAGMA table_info(${this.escapePath(tableName)})`;
         const columns: ObjectLiteral[] = await this.query(sql);
         return !!columns.find(column => column["name"] === columnName);
     }
@@ -256,6 +257,7 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
                 // new index may be passed without name. In this case we generate index name manually.
                 if (!index.name)
                     index.name = this.connection.namingStrategy.indexName(table.name, index.columnNames, index.where);
+
                 upQueries.push(this.createIndexSql(table, index));
                 downQueries.push(this.dropIndexSql(index));
             });
@@ -330,8 +332,8 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
         newTable.name = newTableName;
 
         // rename table
-        const up = new Query(`ALTER TABLE "${oldTable.name}" RENAME TO "${newTableName}"`);
-        const down = new Query(`ALTER TABLE "${newTableName}" RENAME TO "${oldTable.name}"`);
+        const up = new Query(`ALTER TABLE ${this.escapePath(oldTable.name)} RENAME TO ${this.escapePath(newTableName)}`);
+        const down = new Query(`ALTER TABLE ${this.escapePath(newTableName)} RENAME TO ${this.escapePath(oldTable.name)}`);
         await this.executeQueries(up, down);
 
         // rename old table;
@@ -736,7 +738,7 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
      * Note: this operation uses SQL's TRUNCATE query which cannot be reverted in transactions.
      */
     async clearTable(tableName: string): Promise<void> {
-        await this.query(`DELETE FROM "${tableName}"`);
+        await this.query(`DELETE FROM ${this.escapePath(tableName)}`);
     }
 
     /**
@@ -788,36 +790,48 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
         });
     }
 
+    protected async loadTableRecords(tablePath: string, tableOrIndex: 'table' | 'index') {
+        const [database, tableName] = this.splitTablePath(tablePath)
+        const res = await this.query(`SELECT ${database ? `'${database}'` : null} as database, * FROM ${this.escapePath(`sqlite_master`)} WHERE "type" = '${tableOrIndex}' AND "${tableOrIndex === 'table' ? 'name' : 'tbl_name'}" IN ('${tableName}')`)
+        return res
+    }
+    protected async loadPragmaRecords(tablePath: string, pragma: string) {
+        // @ts-ignore // ignore var
+        const [database, tableName] = this.splitTablePath(tablePath)
+        const res = await this.query(`PRAGMA ${pragma}("${tableName}")`)
+        return res
+    }
+
+
     /**
      * Loads all tables (with given names) from the database and creates a Table from them.
      */
     protected async loadTables(tableNames: string[]): Promise<Table[]> {
+
         // if no tables given then no need to proceed
         if (!tableNames || !tableNames.length)
             return [];
 
-        const tableNamesString = tableNames.map(tableName => `'${tableName}'`).join(", ");
-
-        // load tables
-        const dbTables: ObjectLiteral[] = await this.query(`SELECT * FROM "sqlite_master" WHERE "type" = 'table' AND "name" IN (${tableNamesString})`);
-
-        // load indices
-        const dbIndicesDef: ObjectLiteral[] = await this.query(`SELECT * FROM "sqlite_master" WHERE "type" = 'index' AND "tbl_name" IN (${tableNamesString})`);
+        const dbTables: ObjectLiteral[] = (await Promise.all(tableNames.map(tableName => this.loadTableRecords(tableName, 'table')))).reduce((acc, res) => ([...acc, ...res]), []).filter(Boolean)
+        const dbIndicesDef: ObjectLiteral[] = (await Promise.all(tableNames.map(tableName => this.loadTableRecords(tableName, 'index')))).reduce((acc, res) => ([...acc, ...res]), []).filter(Boolean)
 
         // if tables were not found in the db, no need to proceed
         if (!dbTables || !dbTables.length)
             return [];
 
+
         // create table schemas for loaded tables
         return Promise.all(dbTables.map(async dbTable => {
-            const table = new Table({name: dbTable["name"]});
+
+            const tablePath = `${dbTable["database"] ? `${dbTable["database"]}.` : ''}${dbTable["name"]}`;
+            const table = new Table({name: tablePath});
             const sql = dbTable["sql"];
 
             // load columns and indices
             const [dbColumns, dbIndices, dbForeignKeys]: ObjectLiteral[][] = await Promise.all([
-                this.query(`PRAGMA table_info("${dbTable["name"]}")`),
-                this.query(`PRAGMA index_list("${dbTable["name"]}")`),
-                this.query(`PRAGMA foreign_key_list("${dbTable["name"]}")`),
+                this.loadPragmaRecords(tablePath, `table_info`),
+                this.loadPragmaRecords(tablePath, `index_list`),
+                this.loadPragmaRecords(tablePath, `foreign_key_list`),
             ]);
 
             // find column name with auto increment
@@ -979,11 +993,11 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
                     const indexColumns = indexInfos
                         .sort((indexInfo1, indexInfo2) => parseInt(indexInfo1["seqno"]) - parseInt(indexInfo2["seqno"]))
                         .map(indexInfo => indexInfo["name"]);
-
+                    const dbIndexPath = `${dbTable["database"] ? `${dbTable["database"]}.` : ''}${dbIndex!["name"]}`;
                     const isUnique = dbIndex!["unique"] === "1" || dbIndex!["unique"] === 1;
                     return new TableIndex(<TableIndexOptions>{
                         table: table,
-                        name: dbIndex!["name"],
+                        name: dbIndexPath,
                         columnNames: indexColumns,
                         isUnique: isUnique,
                         where: condition ? condition[1] : undefined
@@ -1008,7 +1022,8 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
             throw new Error(`Sqlite does not support AUTOINCREMENT on composite primary key`);
 
         const columnDefinitions = table.columns.map(column => this.buildCreateColumnSql(column, skipPrimary)).join(", ");
-        let sql = `CREATE TABLE "${table.name}" (${columnDefinitions}`;
+        const [database] = this.splitTablePath(table.name)
+        let sql = `CREATE TABLE ${this.escapePath(table.name)} (${columnDefinitions}`;
 
         // need for `addColumn()` method, because it recreates table.
         table.columns
@@ -1042,13 +1057,22 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
         }
 
         if (table.foreignKeys.length > 0 && createForeignKeys) {
-            const foreignKeysSql = table.foreignKeys.map(fk => {
+            const foreignKeysSql = table.foreignKeys.filter(fk => {
+                const [referencedDatabase] = this.splitTablePath(fk.referencedTableName)
+                if (referencedDatabase !== database) {
+                    return false
+                }
+                return true
+            })
+            .map(fk => {
+                // @ts-ignore // ignore var
+                const [referencedDatabase, referencedTable] = this.splitTablePath(fk.referencedTableName)
                 const columnNames = fk.columnNames.map(columnName => `"${columnName}"`).join(", ");
                 if (!fk.name)
                     fk.name = this.connection.namingStrategy.foreignKeyName(table.name, fk.columnNames, fk.referencedTableName, fk.referencedColumnNames);
                 const referencedColumnNames = fk.referencedColumnNames.map(columnName => `"${columnName}"`).join(", ");
 
-                let constraint = `CONSTRAINT "${fk.name}" FOREIGN KEY (${columnNames}) REFERENCES "${fk.referencedTableName}" (${referencedColumnNames})`;
+                let constraint = `CONSTRAINT "${fk.name}" FOREIGN KEY (${columnNames}) REFERENCES "${referencedTable}" (${referencedColumnNames})`;
                 if (fk.onDelete)
                     constraint += ` ON DELETE ${fk.onDelete}`;
                 if (fk.onUpdate)
@@ -1080,7 +1104,7 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
      */
     protected dropTableSql(tableOrName: Table|string, ifExist?: boolean): Query {
         const tableName = tableOrName instanceof Table ? tableOrName.name : tableOrName;
-        const query = ifExist ? `DROP TABLE IF EXISTS "${tableName}"` : `DROP TABLE "${tableName}"`;
+        const query = ifExist ? `DROP TABLE IF EXISTS ${this.escapePath(tableName)}` : `DROP TABLE ${this.escapePath(tableName)}`;
         return new Query(query);
     }
 
@@ -1131,7 +1155,9 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
      */
     protected createIndexSql(table: Table, index: TableIndex): Query {
         const columns = index.columnNames.map(columnName => `"${columnName}"`).join(", ");
-        return new Query(`CREATE ${index.isUnique ? "UNIQUE " : ""}INDEX "${index.name}" ON "${table.name}" (${columns}) ${index.where ? "WHERE " + index.where : ""}`);
+        // @ts-ignore // ignore var
+        const [database, tableName] = this.splitTablePath(table.name)
+        return new Query(`CREATE ${index.isUnique ? "UNIQUE " : ""}INDEX IF NOT EXISTS ${this.escapePath(index.name!)} ON "${tableName}" (${columns}) ${index.where ? "WHERE " + index.where : ""}`);
     }
 
     /**
@@ -1139,7 +1165,7 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
      */
     protected dropIndexSql(indexOrName: TableIndex|string): Query {
         let indexName = indexOrName instanceof TableIndex ? indexOrName.name : indexOrName;
-        return new Query(`DROP INDEX "${indexName}"`);
+        return new Query(`DROP INDEX ${this.escapePath(indexName!)}`);
     }
 
     /**
@@ -1180,7 +1206,12 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
         });
 
         // change table name into 'temporary_table'
-        newTable.name = "temporary_" + newTable.name;
+        newTable.name = this.buildTemporaryTablePath(newTable.name)
+
+        // @ts-ignore // ignore var
+        const [_databaseOld, tableNameOld] = this.splitTablePath(oldTable.name)
+        // @ts-ignore // ignore var
+        const [_databaseNew, tableNameNew] = this.splitTablePath(newTable.name)
 
         // create new table
         upQueries.push(this.createTableSql(newTable, true));
@@ -1201,24 +1232,23 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
                 }).map(column => `"${column.name}"`).join(", ");
             }
 
-            upQueries.push(new Query(`INSERT INTO "${newTable.name}"(${newColumnNames}) SELECT ${oldColumnNames} FROM "${oldTable.name}"`));
-            downQueries.push(new Query(`INSERT INTO "${oldTable.name}"(${oldColumnNames}) SELECT ${newColumnNames} FROM "${newTable.name}"`));
+            upQueries.push(new Query(`INSERT INTO ${this.escapePath(newTable.name)}(${newColumnNames}) SELECT ${oldColumnNames} FROM ${this.escapePath(oldTable.name)}`));
+            downQueries.push(new Query(`INSERT INTO ${this.escapePath(oldTable.name)}(${oldColumnNames}) SELECT ${newColumnNames} FROM ${this.escapePath(newTable.name)}`));
         }
-
         // drop old table
         upQueries.push(this.dropTableSql(oldTable));
         downQueries.push(this.createTableSql(oldTable, true));
 
         // rename old table
-        upQueries.push(new Query(`ALTER TABLE "${newTable.name}" RENAME TO "${oldTable.name}"`));
-        downQueries.push(new Query(`ALTER TABLE "${oldTable.name}" RENAME TO "${newTable.name}"`));
+        upQueries.push(new Query(`ALTER TABLE ${this.escapePath(newTable.name)} RENAME TO ${this.escapePath(tableNameOld)}`));
+        downQueries.push(new Query(`ALTER TABLE ${this.escapePath(oldTable.name)} RENAME TO ${this.escapePath(tableNameNew)}`));
         newTable.name = oldTable.name;
 
         // recreate table indices
         newTable.indices.forEach(index => {
             // new index may be passed without name. In this case we generate index name manually.
             if (!index.name)
-                index.name = this.connection.namingStrategy.indexName(newTable.name, index.columnNames, index.where);
+            index.name = this.connection.namingStrategy.indexName(newTable.name, index.columnNames, index.where);
             upQueries.push(this.createIndexSql(newTable, index));
             downQueries.push(this.dropIndexSql(index));
         });
@@ -1227,4 +1257,24 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
         this.replaceCachedTable(oldTable, newTable);
     }
 
+    /**
+     * tablePath e.g. "myDB.myTable", "myTable"
+     */
+    protected splitTablePath(tablePath: string): [string | undefined, string] {
+        let dotIndex = tablePath.indexOf(".");
+        return (dotIndex >= 0) ? [tablePath.substr(0, dotIndex), tablePath.substr(dotIndex + 1)] : [undefined, tablePath];
+    }
+
+    protected buildTemporaryTablePath(tablePath: string): string {
+        const [database, tableName] = this.splitTablePath(tablePath)
+        return `${database ? `${database}.` : ''}temporary_${tableName}`
+    }
+
+    /**
+     * Escapes given table or view path. Tolerates leading/trailing dots
+     */
+    protected escapePath(target: Table|View|string, disableEscape?: boolean): string {
+        const tableName = target instanceof Table || target instanceof View ? target.name : target;
+        return escapePath(tableName, disableEscape);
+    }
 }

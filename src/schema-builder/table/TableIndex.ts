@@ -1,3 +1,6 @@
+import { BetterSqlite3Driver } from '../../driver/better-sqlite3/BetterSqlite3Driver';
+import { Driver } from "../../driver/Driver";
+import { SqliteDriver } from "../../driver/sqlite/SqliteDriver";
 import {IndexMetadata} from "../../metadata/IndexMetadata";
 import {TableIndexOptions} from "../options/TableIndexOptions";
 
@@ -88,9 +91,11 @@ export class TableIndex {
     /**
      * Creates index from the index metadata object.
      */
-    static create(indexMetadata: IndexMetadata): TableIndex {
+    static create(indexMetadata: IndexMetadata, driver: Driver): TableIndex {
+        let indexPath = indexMetadata.name
+        if (driver instanceof SqliteDriver || driver instanceof BetterSqlite3Driver) indexPath = driver.buildTableName(indexMetadata.name, undefined, indexMetadata.entityMetadata.database)
         return new TableIndex(<TableIndexOptions>{
-            name: indexMetadata.name,
+            name: indexPath,
             columnNames: indexMetadata.columns.map(column => column.databaseName),
             isUnique: indexMetadata.isUnique,
             isSpatial: indexMetadata.isSpatial,

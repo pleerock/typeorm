@@ -9,3 +9,12 @@ ormconfig.json
 ormlogs.log
 npm-debug.log
 /test/github-issues/799/tmp/*
+
+# yarn2
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
