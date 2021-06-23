@@ -930,7 +930,7 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
                 }
             }
 
-            if (oldColumn.isGenerated !== newColumn.isGenerated && newColumn.generationStrategy !== "uuid") {
+            if (oldColumn.isGenerated !== newColumn.isGenerated && newColumn.generationStrategy === "increment") {
                 if (newColumn.isGenerated === true) {
                     upQueries.push(new Query(`CREATE SEQUENCE ${this.buildSequenceName(table, newColumn)} OWNED BY ${this.escapePath(table)}."${newColumn.name}"`));
                     downQueries.push(new Query(`DROP SEQUENCE ${this.buildSequenceName(table, newColumn)}`));
