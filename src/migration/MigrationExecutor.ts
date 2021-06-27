@@ -9,6 +9,10 @@ import {SqlServerConnectionOptions} from "../driver/sqlserver/SqlServerConnectio
 import {PostgresConnectionOptions} from "../driver/postgres/PostgresConnectionOptions";
 import {MongoDriver} from "../driver/mongodb/MongoDriver";
 import {MongoQueryRunner} from "../driver/mongodb/MongoQueryRunner";
+import {MigrationsLockTableAlreadyExistsError} from "../error/MigrationsLockTableAlreadyExistsError";
+import {MigrationsLockTableNotFound} from "../error/MigrationsLockTableNotFound";
+import {SkipMigrationsError} from "../error/SkipMigrationsError";
+import Signals = NodeJS.Signals;
 
 /**
  * Executes migrations: runs pending and reverts previously executed migrations.
@@ -33,6 +37,13 @@ export class MigrationExecutor {
 
     private readonly migrationsTable: string;
     private readonly migrationsTableName: string;
+    private readonly migrationsLock: {
+        enabled: boolean;
+        tableName: string;
+        strategy: "wait-for-unlock"  | "throw-error" | "skip-migrations";
+        waitForUnlockInterval: number;
+    };
+    private migrationsLockTableCreatedByThisProcess: boolean = false;
 
     // -------------------------------------------------------------------------
     // Constructor
@@ -44,6 +55,12 @@ export class MigrationExecutor {
         const options = <SqlServerConnectionOptions|PostgresConnectionOptions>this.connection.driver.options;
         this.migrationsTableName = connection.options.migrationsTableName || "migrations";
         this.migrationsTable = this.connection.driver.buildTableName(this.migrationsTableName, options.schema, options.database);
+        this.migrationsLock = {
+            enabled: !!(connection.options.migrationsLock && connection.options.migrationsLock.enabled),
+            tableName: connection.options.migrationsLock && connection.options.migrationsLock.tableName || "migrations_lock",
+            strategy: connection.options.migrationsLock && connection.options.migrationsLock.strategy || "wait-for-unlock",
+            waitForUnlockInterval: Math.abs(Math.round(connection.options.migrationsLock && connection.options.migrationsLock.waitForUnlockInterval || 1000)),
+        };
     }
 
     // -------------------------------------------------------------------------
@@ -161,10 +178,32 @@ export class MigrationExecutor {
      * thus not saved in the database.
      */
     async executePendingMigrations(): Promise<Migration[]> {
-
-        const queryRunner = this.queryRunner || this.connection.createQueryRunner();
+        const queryRunner = this.queryRunner || this.connection.createQueryRunner("master");
         // create migrations table if its not created yet
         await this.createMigrationsTableIfNotExist(queryRunner);
+
+        ["SIGINT", "SIGTERM"].forEach((signal: Signals) => {
+            process.on(signal, async () => {
+                this.connection.logger.logMigration(`The "${signal}" signal has been received.`, queryRunner);
+                await this.dropMigrationsLockTable(queryRunner).catch(() => {});
+                process.exit(0);
+            });
+        });
+
+        try {
+            await this.runMigrationsLockStrategy(queryRunner);
+        } catch (error) {
+            if (error instanceof SkipMigrationsError) {
+                this.connection.logger.logMigration(error.message, queryRunner);
+                // if query runner was created by us then release it
+                if (!this.queryRunner)
+                    await queryRunner.release();
+                return [];
+            }
+
+            throw error;
+        }
+
         // get all migrations that are executed and saved in the database
         const executedMigrations = await this.loadExecutedMigrations(queryRunner);
 
@@ -208,6 +247,8 @@ export class MigrationExecutor {
             this.connection.logger.logSchemaBuild(`${lastTimeExecutedMigration.name} is the last executed migration. It was executed on ${new Date(lastTimeExecutedMigration.timestamp).toString()}.`);
         this.connection.logger.logSchemaBuild(`${pendingMigrations.length} migrations are new migrations that needs to be executed.`);
 
+        await this.createMigrationsLockTable(queryRunner);
+
         // start transaction if its not started yet
         let transactionStartedByUs = false;
         if (this.transaction === "all" && !queryRunner.isTransactionActive) {
@@ -250,6 +291,7 @@ export class MigrationExecutor {
             throw err;
 
         } finally {
+            await this.dropMigrationsLockTable(queryRunner);
 
             // if query runner was created by us then release it
             if (!this.queryRunner)
@@ -370,6 +412,111 @@ export class MigrationExecutor {
                 },
             ));
         }
+    }
+
+    protected async hasMigrationsLockTable(queryRunner: QueryRunner): Promise<boolean> {
+        if (!this.migrationsLock.enabled) {
+            return false;
+        }
+
+        let tableExist: boolean;
+        // If driver is mongo
+        if (this.connection.driver instanceof MongoDriver) {
+            const mongoRunner = queryRunner as MongoQueryRunner;
+            tableExist = await mongoRunner.hasCollection(this.migrationsLock.tableName);
+        } else {
+            tableExist = await queryRunner.hasTable(this.migrationsLock.tableName);
+        }
+
+        return tableExist;
+    }
+
+    protected async runMigrationsLockStrategy(queryRunner: QueryRunner): Promise<void> {
+        if (!this.migrationsLock.enabled) {
+            this.connection.logger.logMigration(`The migration lock mechanism is disabled. Ignore it.`, queryRunner);
+            return;
+        }
+
+        let tableExist: boolean = await this.hasMigrationsLockTable(queryRunner);
+        if  (tableExist) {
+            switch (this.migrationsLock.strategy) {
+                case "wait-for-unlock":
+                    while (await this.hasMigrationsLockTable(queryRunner)) {
+                        this.connection.logger.logMigration(`Migrations lock table found. Waiting for ${this.migrationsLock.waitForUnlockInterval}ms before the next check.`, queryRunner);
+                        await new Promise(resolve => setTimeout(resolve, this.migrationsLock.waitForUnlockInterval));
+                    }
+                    return;
+                case "skip-migrations":
+                    throw new SkipMigrationsError();
+                case "throw-error":
+                default:
+                    throw new MigrationsLockTableAlreadyExistsError();
+            }
+
+        }
+
+        this.connection.logger.logMigration(`Migrations lock table not found. Migrations can be triggered.`, queryRunner);
+    }
+
+    protected async createMigrationsLockTable(queryRunner: QueryRunner): Promise<void> {
+        if (!this.migrationsLock.enabled) {
+            this.connection.logger.logMigration(`The migration lock mechanism is disabled. Ignore it.`, queryRunner);
+            return;
+        }
+
+        // If driver is mongo
+        if (this.connection.driver instanceof MongoDriver) {
+            const mongoRunner = queryRunner as MongoQueryRunner;
+
+            await mongoRunner.createCollection(this.migrationsLock.tableName);
+        } else {
+            await queryRunner.createTable(new Table(
+                {
+                    name: this.migrationsLock.tableName,
+                    columns: [
+                        {
+                            name: "id",
+                            type: this.connection.driver.normalizeType({type: this.connection.driver.mappedDataTypes.migrationId}),
+                            isGenerated: true,
+                            generationStrategy: "increment",
+                            isPrimary: true,
+                            isNullable: false
+                        }
+                    ]
+                },
+            ));
+        }
+
+        this.connection.logger.logMigration(`The migration lock table has been successfully created.`, queryRunner);
+        this.migrationsLockTableCreatedByThisProcess = true;
+    }
+
+    protected async dropMigrationsLockTable(queryRunner: QueryRunner): Promise<void> {
+        if (!this.migrationsLock.enabled) {
+            this.connection.logger.logMigration(`The migration lock mechanism is disabled. Ignore it.`, queryRunner);
+            return;
+        }
+
+        if (!this.migrationsLockTableCreatedByThisProcess) {
+            this.connection.logger.logMigration(`The migration lock table was found, but it was created by another process and will not be deleted by this process.`, queryRunner);
+            return;
+        }
+
+        let tableExist: boolean = await this.hasMigrationsLockTable(queryRunner);
+        if (!tableExist) {
+            throw new MigrationsLockTableNotFound();
+        }
+
+        // If driver is mongo
+        if (this.connection.driver instanceof MongoDriver) {
+            const mongoRunner = queryRunner as MongoQueryRunner;
+            await mongoRunner.dropCollection(this.migrationsLock.tableName);
+        } else {
+            await queryRunner.dropTable(this.migrationsLock.tableName, false, true, true);
+        }
+
+        this.connection.logger.logMigration(`The migration lock table has been successfully deleted.`, queryRunner);
+        this.migrationsLockTableCreatedByThisProcess = false;
     }
 
     /**

@@ -13,7 +13,7 @@ import {
     Code,
     Collection,
     CollectionAggregationOptions,
-    CollectionBulkWriteOptions,
+    CollectionBulkWriteOptions, CollectionCreateOptions,
     CollectionInsertManyOptions,
     CollectionInsertOneOptions,
     CollectionOptions,
@@ -148,6 +148,13 @@ export class MongoQueryRunner implements QueryRunner {
     }
 
     /**
+     * Creates a collection.
+     */
+    async createCollection(collectionName: string, options?: CollectionCreateOptions): Promise<Collection<any>> {
+        return this.databaseConnection.db(this.connection.driver.database!).createCollection(collectionName, options);
+    }
+
+    /**
      * Creates an index on the db and collection.
      */
     async createCollectionIndex(collectionName: string, fieldOrSpec: string | any, options?: MongodbIndexOptions): Promise<string> {
@@ -181,6 +188,13 @@ export class MongoQueryRunner implements QueryRunner {
      */
     async distinct(collectionName: string, key: string, query: ObjectLiteral, options?: { readPreference?: ReadPreference | string }): Promise<any> {
         return await this.getCollection(collectionName).distinct(key, query, options);
+    }
+
+    /**
+     * Drops a collection.
+     */
+    async dropCollection(collectionName: string): Promise<boolean> {
+        return this.databaseConnection.db(this.connection.driver.database!).dropCollection(collectionName);
     }
 
     /**
@@ -875,6 +889,10 @@ export class MongoQueryRunner implements QueryRunner {
      */
     async executeMemoryDownSql(): Promise<void> {
         throw new Error(`This operation is not supported by MongoDB driver.`);
+    }
+
+    async hasCollection(collectionName: string): Promise<boolean> {
+        return !!(await this.databaseConnection.db(this.connection.driver.database!).listCollections({ name: collectionName }).next());
     }
 
     // -------------------------------------------------------------------------

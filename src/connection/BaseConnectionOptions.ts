@@ -55,6 +55,16 @@ export interface BaseConnectionOptions {
     readonly migrationsTransactionMode?: "all" | "none" | "each";
 
     /**
+     * Migrations lock mechanism configuration.
+     */
+    readonly migrationsLock?: {
+        enabled: boolean;
+        tableName?: string;
+        strategy?: "wait-for-unlock"  | "throw-error" | "skip-migrations";
+        waitForUnlockInterval?: number;
+    };
+
+    /**
      * Naming strategy to be used to name tables and columns in the database.
      */
     readonly namingStrategy?: NamingStrategyInterface;
