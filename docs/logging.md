@@ -55,7 +55,7 @@ There are other options you can use:
 * `info` - logs internal orm informative messages.
 * `log` - logs internal orm log messages.
 
-You can specify as many options as needed. 
+You can specify as many options as needed.
 If you want to enable all logging you can simply specify `logging: "all"`:
 
 ```typescript
@@ -85,7 +85,7 @@ This code will log all queries which run more then `1 second`.
 
 TypeORM ships with 4 different types of logger:
 
-* `advanced-console` - this is the default logger which logs all messages into the console using color 
+* `advanced-console` - this is the default logger which logs all messages into the console using color
 and sql syntax highlighting (using [chalk](https://github.com/chalk/chalk)).
 * `simple-console` - this is a simple console logger which is exactly the same as the advanced logger, but it does not use any color highlighting.
 This logger can be used if you have problems / or don't like colorized logs.
@@ -153,11 +153,16 @@ getConnectionOptions().then(connectionOptions => {
 ```
 
 Logger methods can accept `QueryRunner` when it's available. It's helpful if you want to log additional data.
-Also, via query runner, you can get access to additional data passed during persist/remove. For example:
+Also, via query runner, you can get access to additional data passed during persist/remove, or attached to a local instance of `EntityManager`. For example:
 
 ```typescript
-// user sends request during entity save
+// either: (1) user sends request during entity save
 postRepository.save(post, { data: { request: request } });
+
+// or: (2) user creates request-scoped entity manager, and attaches request
+const manager = connection.createEntityManager();
+manager.data = { request: request };
+manager.query("SELECT * FROM post");
 
 // in logger you can access it this way:
 logQuery(query: string, parameters?: any[], queryRunner?: QueryRunner) {

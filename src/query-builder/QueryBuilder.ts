@@ -23,6 +23,7 @@ import {EntitySchema} from "../";
 import {FindOperator} from "../find-options/FindOperator";
 import {In} from "../find-options/operator/In";
 import {EntityColumnNotFound} from "../error/EntityColumnNotFound";
+import { ObjectUtils } from "../util/ObjectUtils";
 
 // todo: completely cover query builder with tests
 // todo: entityOrProperty can be target name. implement proper behaviour if it is.
@@ -58,6 +59,12 @@ export abstract class QueryBuilder<Entity> {
      */
     readonly expressionMap: QueryExpressionMap;
 
+    /**
+     * Stores temporarily user data.
+     * Useful for sharing data with subscribers.
+     */
+    data?: ObjectLiteral;
+
     // -------------------------------------------------------------------------
     // Protected Properties
     // -------------------------------------------------------------------------
@@ -89,6 +96,7 @@ export abstract class QueryBuilder<Entity> {
             this.connection = connectionOrQueryBuilder.connection;
             this.queryRunner = connectionOrQueryBuilder.queryRunner;
             this.expressionMap = connectionOrQueryBuilder.expressionMap.clone();
+            this.data = connectionOrQueryBuilder.data;
 
         } else {
             this.connection = connectionOrQueryBuilder;
@@ -980,10 +988,12 @@ export abstract class QueryBuilder<Entity> {
     }
 
     /**
-     * Creates a query builder used to execute sql queries inside this query builder.
+     * Obtains or creates query runner used to execute sql queries inside this query builder.
      */
     protected obtainQueryRunner() {
-        return this.queryRunner || this.connection.createQueryRunner();
+        const queryRunner = this.queryRunner || this.connection.createQueryRunner();
+        if (this.data) ObjectUtils.assign(queryRunner.data, this.data);
+        return queryRunner;
     }
 
 }

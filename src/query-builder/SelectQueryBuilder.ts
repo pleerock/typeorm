@@ -2153,7 +2153,11 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
      * Creates a query builder used to execute sql queries inside this query builder.
      */
     protected obtainQueryRunner() {
-        return this.queryRunner || this.connection.createQueryRunner("slave");
+        const queryRunner = this.queryRunner || this.connection.createQueryRunner("slave");
+        if (this.data) {
+            ObjectUtils.assign(queryRunner.data, this.data);
+        }
+        return queryRunner;
     }
 
 }

@@ -32,7 +32,7 @@ import {QueryResultCache} from "../cache/QueryResultCache";
 import {SqljsEntityManager} from "../entity-manager/SqljsEntityManager";
 import {RelationLoader} from "../query-builder/RelationLoader";
 import {RelationIdLoader} from "../query-builder/RelationIdLoader";
-import {EntitySchema} from "../";
+import {EntitySchema, ObjectLiteral} from "../";
 import {SqlServerDriver} from "../driver/sqlserver/SqlServerDriver";
 import {MysqlDriver} from "../driver/mysql/MysqlDriver";
 import {ObjectUtils} from "../util/ObjectUtils";
@@ -391,7 +391,7 @@ export class Connection {
     /**
      * Executes raw SQL query and returns raw database results.
      */
-    async query(query: string, parameters?: any[], queryRunner?: QueryRunner): Promise<any> {
+    async query(query: string, parameters?: any[], queryRunner?: QueryRunner, data?: ObjectLiteral): Promise<any> {
         if (this instanceof MongoEntityManager)
             throw new Error(`Queries aren't supported by MongoDB.`);
 
@@ -399,6 +399,10 @@ export class Connection {
             throw new QueryRunnerProviderAlreadyReleasedError();
 
         const usedQueryRunner = queryRunner || this.createQueryRunner();
+
+        if (data) {
+            ObjectUtils.assign(usedQueryRunner.data, data);
+        }
 
         try {
             return await usedQueryRunner.query(query, parameters);  // await is needed here because we are using finally

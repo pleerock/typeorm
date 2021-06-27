@@ -57,6 +57,12 @@ export class EntityManager {
      */
     readonly queryRunner?: QueryRunner;
 
+    /**
+     * Stores temporarily user data
+     * Useful for sharing data with subscribers/logger.
+     */
+     data?: ObjectLiteral;
+
     // -------------------------------------------------------------------------
     // Protected Properties
     // -------------------------------------------------------------------------
@@ -125,10 +131,7 @@ export class EntityManager {
         if (this.queryRunner && this.queryRunner.isTransactionActive)
             throw new Error(`Cannot start transaction because its already started`);
 
-        // if query runner is already defined in this class, it means this entity manager was already created for a single connection
-        // if its not defined we create a new query runner - single connection where we'll execute all our operations
-        const queryRunner = this.queryRunner || this.connection.createQueryRunner();
-
+        const queryRunner = this.obtainQueryRunner();
         try {
             if (isolation) {
                 await queryRunner.startTransaction(isolation);
@@ -155,7 +158,7 @@ export class EntityManager {
      * Executes raw SQL query and returns raw database results.
      */
     async query(query: string, parameters?: any[]): Promise<any> {
-        return this.connection.query(query, parameters, this.queryRunner);
+        return this.connection.query(query, parameters, this.queryRunner, this.data);
     }
 
     /**
@@ -172,12 +175,17 @@ export class EntityManager {
      * Creates a new query builder that can be used to build a sql query.
      */
     createQueryBuilder<Entity>(entityClass?: EntityTarget<Entity>|QueryRunner, alias?: string, queryRunner?: QueryRunner): SelectQueryBuilder<Entity> {
+        let queryBuilder: SelectQueryBuilder<Entity>;
         if (alias) {
-            return this.connection.createQueryBuilder(entityClass as EntityTarget<Entity>, alias, queryRunner || this.queryRunner);
+            queryBuilder = this.connection.createQueryBuilder(entityClass as EntityTarget<Entity>, alias, queryRunner || this.queryRunner);
 
         } else {
-            return this.connection.createQueryBuilder(entityClass as QueryRunner|undefined || queryRunner || this.queryRunner);
+            queryBuilder = this.connection.createQueryBuilder(entityClass as QueryRunner|undefined || queryRunner || this.queryRunner);
         }
+        if (this.data) {
+            queryBuilder.data = this.data;
+        }
+        return queryBuilder;
     }
 
     /**
@@ -328,8 +336,10 @@ export class EntityManager {
         if (Array.isArray(entity) && entity.length === 0)
             return Promise.resolve(entity);
 
+        const executorOptions = this.addDataToExecutorOptions(options);
+
         // execute save operation
-        return new EntityPersistExecutor(this.connection, this.queryRunner, "save", target, entity, options)
+        return new EntityPersistExecutor(this.connection, this.queryRunner, "save", target, entity, executorOptions)
             .execute()
             .then(() => entity);
     }
@@ -368,8 +378,10 @@ export class EntityManager {
         if (Array.isArray(entity) && entity.length === 0)
             return Promise.resolve(entity);
 
+        const executorOptions = this.addDataToExecutorOptions(options);
+
         // execute save operation
-        return new EntityPersistExecutor(this.connection, this.queryRunner, "remove", target, entity, options)
+        return new EntityPersistExecutor(this.connection, this.queryRunner, "remove", target, entity, executorOptions)
             .execute()
             .then(() => entity);
     }
@@ -411,8 +423,10 @@ export class EntityManager {
         if (Array.isArray(entity) && entity.length === 0)
             return Promise.resolve(entity);
 
+        const executorOptions = this.addDataToExecutorOptions(options);
+
         // execute soft-remove operation
-        return new EntityPersistExecutor(this.connection, this.queryRunner, "soft-remove", target, entity, options)
+        return new EntityPersistExecutor(this.connection, this.queryRunner, "soft-remove", target, entity, executorOptions)
             .execute()
             .then(() => entity);
     }
@@ -454,8 +468,10 @@ export class EntityManager {
         if (Array.isArray(entity) && entity.length === 0)
             return Promise.resolve(entity);
 
+        const executorOptions = this.addDataToExecutorOptions(options);
+
         // execute recover operation
-        return new EntityPersistExecutor(this.connection, this.queryRunner, "recover", target, entity, options)
+        return new EntityPersistExecutor(this.connection, this.queryRunner, "recover", target, entity, executorOptions)
             .execute()
             .then(() => entity);
     }
@@ -838,7 +854,7 @@ export class EntityManager {
      */
     async clear<Entity>(entityClass: EntityTarget<Entity>): Promise<void> {
         const metadata = this.connection.getMetadata(entityClass);
-        const queryRunner = this.queryRunner || this.connection.createQueryRunner();
+        const queryRunner = this.obtainQueryRunner();
         try {
             return await queryRunner.clearTable(metadata.tablePath); // await is needed here because we are using finally
 
@@ -1003,5 +1019,28 @@ export class EntityManager {
             throw new NoNeedToReleaseEntityManagerError();
 
         return this.queryRunner.release();
+    }
+
+    /**
+     * Obtains or creates query runner used to execute sql queries inside this query builder.
+     */
+     protected obtainQueryRunner() {
+        // if query runner is already defined in this class, it means this entity manager was already created for a single connection
+        // if its not defined we create a new query runner - single connection where we'll execute all our operations
+        const queryRunner = this.queryRunner || this.connection.createQueryRunner();
+        if (this.data) ObjectUtils.assign(queryRunner.data, this.data);
+        return queryRunner;
+    }
+
+    /**
+     * Add temporary user data to executor save options, if defined on this class
+     */
+    protected addDataToExecutorOptions(options?: SaveOptions): SaveOptions | undefined {
+        if (this.data) {
+            options = options || {};
+            options.data = options.data || {};
+            ObjectUtils.assign(options.data, this.data);
+        }
+        return options;
     }
 }

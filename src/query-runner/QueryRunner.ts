@@ -47,7 +47,7 @@ export interface QueryRunner {
 
     /**
      * Stores temporarily user data.
-     * Useful for sharing data with subscribers.
+     * Useful for sharing data with subscribers/logger.
      */
     data: ObjectLiteral;
 
