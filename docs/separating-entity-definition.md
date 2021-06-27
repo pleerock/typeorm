@@ -112,6 +112,44 @@ export const PersonSchema = new EntitySchema({
 });
 ```
 
+Example with embedded entity:
+
+```ts
+import {EntitySchema} from "typeorm";
+
+const AddressEntity = new EntitySchema({
+    name: 'address',
+    columns: {
+        city: {
+            type: String
+        },
+        zipcode: {
+            type: String
+        }
+    }
+});
+
+export const PersonEntity = new EntitySchema({
+    name: "person",
+    columns: {
+        id: {
+            type: Number,
+            primary: true,
+            generated: true
+        },
+        name: {
+            type: String
+        }
+    },
+    embeddeds: {
+        address: {
+            isArray: false,
+            type: () => AddressEntity
+        }
+    }
+});
+```
+
 If you want to make your entity typesafe, you can define a model and specify it in schema definition:
 
 ```ts

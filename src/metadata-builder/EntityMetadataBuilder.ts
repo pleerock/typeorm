@@ -24,6 +24,7 @@ import {SqlServerDriver} from "../driver/sqlserver/SqlServerDriver";
 import {PostgresDriver} from "../driver/postgres/PostgresDriver";
 import {ExclusionMetadata} from "../metadata/ExclusionMetadata";
 import {AuroraDataApiDriver} from "../driver/aurora-data-api/AuroraDataApiDriver";
+import {EntitySchemaTransformer} from "../entity-schema/EntitySchemaTransformer";
 
 /**
  * Builds EntityMetadata objects and all its sub-metadatas.
@@ -54,7 +55,7 @@ export class EntityMetadataBuilder {
     // -------------------------------------------------------------------------
 
     constructor(private connection: Connection,
-                private metadataArgsStorage: MetadataArgsStorage) {
+        private metadataArgsStorage: MetadataArgsStorage) {
 
         this.junctionEntityMetadataBuilder = new JunctionEntityMetadataBuilder(connection);
         this.closureJunctionEntityMetadataBuilder = new ClosureJunctionEntityMetadataBuilder(connection);
@@ -208,7 +209,7 @@ export class EntityMetadataBuilder {
                     entityMetadatas.push(junctionEntityMetadata);
                 });
 
-        });
+            });
 
         // update entity metadata depend properties
         entityMetadatas
@@ -353,13 +354,13 @@ export class EntityMetadataBuilder {
         // if single table inheritance is used, we need to mark all embedded columns as nullable
         entityMetadata.embeddeds = this.createEmbeddedsRecursively(entityMetadata, this.metadataArgsStorage.filterEmbeddeds(entityMetadata.inheritanceTree))
             .map((embedded: EmbeddedMetadata): EmbeddedMetadata => {
-                 if (entityMetadata.inheritancePattern === "STI") {
-                     embedded.columns = embedded.columns.map((column: ColumnMetadata): ColumnMetadata => {
-                         column.isNullable = true;
-                         return column;
-                     });
-                 }
-                 return embedded;
+                if (entityMetadata.inheritancePattern === "STI") {
+                    embedded.columns = embedded.columns.map((column: ColumnMetadata): ColumnMetadata => {
+                        column.isNullable = true;
+                        return column;
+                    });
+                }
+                return embedded;
             });
 
         entityMetadata.ownColumns = this.metadataArgsStorage
@@ -578,30 +579,57 @@ export class EntityMetadataBuilder {
     protected createEmbeddedsRecursively(entityMetadata: EntityMetadata, embeddedArgs: EmbeddedMetadataArgs[]): EmbeddedMetadata[] {
         return embeddedArgs.map(embeddedArgs => {
             const embeddedMetadata = new EmbeddedMetadata({ entityMetadata: entityMetadata, args: embeddedArgs });
-            const targets = MetadataUtils.getInheritanceTree(embeddedMetadata.type);
+            if (typeof embeddedMetadata.type === "function") {
+                const targets = MetadataUtils.getInheritanceTree(embeddedMetadata.type);
 
-            embeddedMetadata.columns = this.metadataArgsStorage.filterColumns(targets).map(args => {
-                return new ColumnMetadata({ connection: this.connection, entityMetadata, embeddedMetadata, args});
-            });
-            embeddedMetadata.relations = this.metadataArgsStorage.filterRelations(targets).map(args => {
-                return new RelationMetadata({ entityMetadata, embeddedMetadata, args });
-            });
-            embeddedMetadata.listeners = this.metadataArgsStorage.filterListeners(targets).map(args => {
-                return new EntityListenerMetadata({ entityMetadata, embeddedMetadata, args });
-            });
-            embeddedMetadata.indices = this.metadataArgsStorage.filterIndices(targets).map(args => {
-                return new IndexMetadata({ entityMetadata, embeddedMetadata, args });
-            });
-            embeddedMetadata.uniques = this.metadataArgsStorage.filterUniques(targets).map(args => {
-                return new UniqueMetadata({ entityMetadata, embeddedMetadata, args });
-            });
-            embeddedMetadata.relationIds = this.metadataArgsStorage.filterRelationIds(targets).map(args => {
-                return new RelationIdMetadata({ entityMetadata, args });
-            });
-            embeddedMetadata.relationCounts = this.metadataArgsStorage.filterRelationCounts(targets).map(args => {
-                return new RelationCountMetadata({ entityMetadata, args });
-            });
-            embeddedMetadata.embeddeds = this.createEmbeddedsRecursively(entityMetadata, this.metadataArgsStorage.filterEmbeddeds(targets));
+                embeddedMetadata.columns = this.metadataArgsStorage.filterColumns(targets).map(args => {
+                    return new ColumnMetadata({ connection: this.connection, entityMetadata, embeddedMetadata, args });
+                });
+                embeddedMetadata.relations = this.metadataArgsStorage.filterRelations(targets).map(args => {
+                    return new RelationMetadata({ entityMetadata, embeddedMetadata, args });
+                });
+                embeddedMetadata.listeners = this.metadataArgsStorage.filterListeners(targets).map(args => {
+                    return new EntityListenerMetadata({ entityMetadata, embeddedMetadata, args });
+                });
+                embeddedMetadata.indices = this.metadataArgsStorage.filterIndices(targets).map(args => {
+                    return new IndexMetadata({ entityMetadata, embeddedMetadata, args });
+                });
+                embeddedMetadata.uniques = this.metadataArgsStorage.filterUniques(targets).map(args => {
+                    return new UniqueMetadata({ entityMetadata, embeddedMetadata, args });
+                });
+                embeddedMetadata.relationIds = this.metadataArgsStorage.filterRelationIds(targets).map(args => {
+                    return new RelationIdMetadata({ entityMetadata, args });
+                });
+                embeddedMetadata.relationCounts = this.metadataArgsStorage.filterRelationCounts(targets).map(args => {
+                    return new RelationCountMetadata({ entityMetadata, args });
+                });
+                embeddedMetadata.embeddeds = this.createEmbeddedsRecursively(entityMetadata, this.metadataArgsStorage.filterEmbeddeds(targets));
+            } else {
+                const embeddedMetadataArgsStorage = new EntitySchemaTransformer().transform([embeddedMetadata.type]);
+
+                embeddedMetadata.columns = embeddedMetadataArgsStorage.filterColumns(embeddedMetadata.type.options.name).map(args => {
+                    return new ColumnMetadata({ connection: this.connection, entityMetadata, embeddedMetadata, args });
+                });
+                embeddedMetadata.relations = embeddedMetadataArgsStorage.filterRelations(embeddedMetadata.type.options.name).map(args => {
+                    return new RelationMetadata({ entityMetadata, embeddedMetadata, args });
+                });
+                embeddedMetadata.listeners = embeddedMetadataArgsStorage.filterListeners(embeddedMetadata.type.options.name).map(args => {
+                    return new EntityListenerMetadata({ entityMetadata, embeddedMetadata, args });
+                });
+                embeddedMetadata.indices = embeddedMetadataArgsStorage.filterIndices(embeddedMetadata.type.options.name).map(args => {
+                    return new IndexMetadata({ entityMetadata, embeddedMetadata, args });
+                });
+                embeddedMetadata.uniques = embeddedMetadataArgsStorage.filterUniques(embeddedMetadata.type.options.name).map(args => {
+                    return new UniqueMetadata({ entityMetadata, embeddedMetadata, args });
+                });
+                embeddedMetadata.relationIds = embeddedMetadataArgsStorage.filterRelationIds(embeddedMetadata.type.options.name).map(args => {
+                    return new RelationIdMetadata({ entityMetadata, args });
+                });
+                embeddedMetadata.relationCounts = embeddedMetadataArgsStorage.filterRelationCounts(embeddedMetadata.type.options.name).map(args => {
+                    return new RelationCountMetadata({ entityMetadata, args });
+                });
+                embeddedMetadata.embeddeds = this.createEmbeddedsRecursively(entityMetadata, embeddedMetadataArgsStorage.filterEmbeddeds(embeddedMetadata.type.options.name));
+            }
             embeddedMetadata.embeddeds.forEach(subEmbedded => subEmbedded.parentEmbeddedMetadata = embeddedMetadata);
             entityMetadata.allEmbeddeds.push(embeddedMetadata);
             return embeddedMetadata;

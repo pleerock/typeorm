@@ -9,6 +9,7 @@ import {MongoDriver} from "../driver/mongodb/MongoDriver";
 import {EntityListenerMetadata} from "./EntityListenerMetadata";
 import {IndexMetadata} from "./IndexMetadata";
 import {UniqueMetadata} from "./UniqueMetadata";
+import {EntitySchema} from "../entity-schema/EntitySchema";
 
 /**
  * Contains all information about entity's embedded property.
@@ -32,7 +33,7 @@ export class EmbeddedMetadata {
     /**
      * Embedded target type.
      */
-    type: Function;
+    type: Function | EntitySchema;
 
     /**
      * Property name on which this embedded is attached.
@@ -190,7 +191,7 @@ export class EmbeddedMetadata {
      * Creates a new embedded object.
      */
     create(): any {
-        return new (this.type as any);
+        return typeof this.type === "function" ? new (this.type as any) : {};
     }
 
     // ---------------------------------------------------------------------

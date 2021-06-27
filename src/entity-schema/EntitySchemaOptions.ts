@@ -7,6 +7,7 @@ import {TableType} from "../metadata/types/TableTypes";
 import {EntitySchemaUniqueOptions} from "./EntitySchemaUniqueOptions";
 import {EntitySchemaCheckOptions} from "./EntitySchemaCheckOptions";
 import {EntitySchemaExclusionOptions} from "./EntitySchemaExclusionOptions";
+import { EntitySchemaEmbeddedOptions } from "./EntitySchemaEmbeddedOptions";
 
 /**
  * Interface for entity metadata mappings stored inside "schemas" instead of models decorated by decorators.
@@ -65,6 +66,13 @@ export class EntitySchemaOptions<T> {
      */
     relations?: {
         [P in keyof T]?: EntitySchemaRelationOptions;
+    };
+
+    /**
+     * Entity embedded's options.
+     */
+    embeddeds?: {
+        [P in keyof T]?: EntitySchemaEmbeddedOptions;
     };
 
     /**

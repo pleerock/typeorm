@@ -13,6 +13,7 @@ import {GeneratedMetadataArgs} from "../metadata-args/GeneratedMetadataArgs";
 import {UniqueMetadataArgs} from "../metadata-args/UniqueMetadataArgs";
 import {CheckMetadataArgs} from "../metadata-args/CheckMetadataArgs";
 import {ExclusionMetadataArgs} from "../metadata-args/ExclusionMetadataArgs";
+import {EmbeddedMetadataArgs} from "../metadata-args/EmbeddedMetadataArgs";
 
 /**
  * Transforms entity schema into metadata args storage.
@@ -187,6 +188,21 @@ export class EntitySchemaTransformer {
                             metadataArgsStorage.joinTables.push(joinTable);
                         }
                     }
+                });
+            }
+
+            // add embedded metadata args from the schema
+            if (options.embeddeds) {
+                Object.keys(options.embeddeds).forEach(embeddedName => {
+                    const embeddedSchema = options.embeddeds![embeddedName]!;
+                    const embedded: EmbeddedMetadataArgs = {
+                        target: options.target || options.name,
+                        propertyName: embeddedName,
+                        isArray: embeddedSchema.isArray === true,
+                        prefix: embeddedSchema.prefix !== undefined ? embeddedSchema.prefix : undefined,
+                        type: embeddedSchema.type
+                    };
+                    metadataArgsStorage.embeddeds.push(embedded);
                 });
             }
 
