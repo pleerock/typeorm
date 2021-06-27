@@ -540,11 +540,11 @@ Drops a column in the table.
 ---
 
 ```ts
-dropColumns(table: Table|string, columns: TableColumn[]): Promise<void>
+dropColumns(table: Table|string, columns: TableColumn[]|string[]): Promise<void>
 ```
 
 - `table` - Table object or name
-- `columns` - array of TableColumn objects to be dropped
+- `columns` - array of TableColumn objects or column names to be dropped 
 
 Drops a columns in the table.
 

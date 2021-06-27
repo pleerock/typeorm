@@ -851,7 +851,7 @@ export class OracleQueryRunner extends BaseQueryRunner implements QueryRunner {
     /**
      * Drops the columns in the table.
      */
-    async dropColumns(tableOrName: Table|string, columns: TableColumn[]): Promise<void> {
+    async dropColumns(tableOrName: Table|string, columns: TableColumn[]|string[]): Promise<void> {
         for (const column of columns) {
             await this.dropColumn(tableOrName, column);
         }

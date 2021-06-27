@@ -251,7 +251,7 @@ export interface QueryRunner {
     /**
      * Drops columns in the table.
      */
-    dropColumns(table: Table|string, columns: TableColumn[]): Promise<void>;
+    dropColumns(table: Table|string, columns: TableColumn[]|string[]): Promise<void>;
 
     /**
      * Creates a new primary key.

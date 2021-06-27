@@ -656,7 +656,7 @@ export class MongoQueryRunner implements QueryRunner {
     /**
      * Drops the columns in the table.
      */
-    async dropColumns(tableOrName: Table | string, columns: TableColumn[]): Promise<void> {
+    async dropColumns(tableOrName: Table | string, columns: TableColumn[] | string[]): Promise<void> {
         throw new Error(`Schema update queries are not supported by MongoDB driver.`);
     }
 

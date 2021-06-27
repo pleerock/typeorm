@@ -507,7 +507,7 @@ dropColumn(table: Table|string, column: TableColumn|string): Promise<void>
 ---
 
 ```ts
-dropColumns(table: Table|string, columns: TableColumn[]): Promise<void>
+dropColumns(table: Table|string, columns: TableColumn[]|string[]): Promise<void>
 ```
 
 - `table` - 表对象或名称
