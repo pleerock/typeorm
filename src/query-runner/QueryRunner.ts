@@ -1,18 +1,19 @@
-import {TableColumn} from "../schema-builder/table/TableColumn";
+import {ObjectLiteral} from "../common/ObjectLiteral";
+import {Connection} from "../connection/Connection";
+import {SqlInMemory} from "../driver/SqlInMemory";
+import {IsolationLevel} from "../driver/types/IsolationLevel";
+import {ReplicationMode} from "../driver/types/ReplicationMode";
+import {EntityManager} from "../entity-manager/EntityManager";
+import {ReadStream} from "../platform/PlatformTools";
 import {Table} from "../schema-builder/table/Table";
+import {TableCheck} from "../schema-builder/table/TableCheck";
+import {TableColumn} from "../schema-builder/table/TableColumn";
+import {TableExclusion} from "../schema-builder/table/TableExclusion";
 import {TableForeignKey} from "../schema-builder/table/TableForeignKey";
 import {TableIndex} from "../schema-builder/table/TableIndex";
-import {Connection} from "../connection/Connection";
-import {ReadStream} from "../platform/PlatformTools";
-import {EntityManager} from "../entity-manager/EntityManager";
-import {ObjectLiteral} from "../common/ObjectLiteral";
-import {SqlInMemory} from "../driver/SqlInMemory";
 import {TableUnique} from "../schema-builder/table/TableUnique";
 import {View} from "../schema-builder/view/View";
 import {Broadcaster} from "../subscriber/Broadcaster";
-import {TableCheck} from "../schema-builder/table/TableCheck";
-import {IsolationLevel} from "../driver/types/IsolationLevel";
-import {TableExclusion} from "../schema-builder/table/TableExclusion";
 
 /**
  * Runs queries on a single database connection.
@@ -140,6 +141,11 @@ export interface QueryRunner {
      * Loads all views from the database and returns them.
      */
     getViews(viewPaths: string[]): Promise<View[]>;
+
+    /**
+     * Returns replication mode (ex: `master` or `slave`).
+     */
+    getReplicationMode(): ReplicationMode;
 
     /**
      * Checks if a database with the given name exist.
