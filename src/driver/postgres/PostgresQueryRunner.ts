@@ -23,6 +23,7 @@ import {IsolationLevel} from "../types/IsolationLevel";
 import {PostgresDriver} from "./PostgresDriver";
 import {ReplicationMode} from "../types/ReplicationMode";
 import {BroadcasterResult} from "../../subscriber/BroadcasterResult";
+import {VersionUtils} from "../../util/VersionUtils";
 
 /**
  * Runs queries on a single postgres database connection.
@@ -1415,6 +1416,7 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
 
         await this.startTransaction();
         try {
+            const version = await this.getVersion()
             // drop views
             const selectViewDropsQuery = `SELECT 'DROP VIEW IF EXISTS "' || schemaname || '"."' || viewname || '" CASCADE;' as "query" ` +
              `FROM "pg_views" WHERE "schemaname" IN (${schemaNamesString}) AND "viewname" NOT IN ('geography_columns', 'geometry_columns', 'raster_columns', 'raster_overviews')`;
@@ -1422,10 +1424,13 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
             await Promise.all(dropViewQueries.map(q => this.query(q["query"])));
 
             // drop materialized views
-            const selectMatViewDropsQuery = `SELECT 'DROP MATERIALIZED VIEW IF EXISTS "' || schemaname || '"."' || matviewname || '" CASCADE;' as "query" ` +
-             `FROM "pg_matviews" WHERE "schemaname" IN (${schemaNamesString})`;
-            const dropMatViewQueries: ObjectLiteral[] = await this.query(selectMatViewDropsQuery);
-            await Promise.all(dropMatViewQueries.map(q => this.query(q["query"])));
+            // Note: materialized views introduced in Postgres 9.3
+            if (VersionUtils.isGreaterOrEqual(version, "9.3")) {
+                const selectMatViewDropsQuery = `SELECT 'DROP MATERIALIZED VIEW IF EXISTS "' || schemaname || '"."' || matviewname || '" CASCADE;' as "query" ` +
+                    `FROM "pg_matviews" WHERE "schemaname" IN (${schemaNamesString})`;
+                const dropMatViewQueries: ObjectLiteral[] = await this.query(selectMatViewDropsQuery);
+                await Promise.all(dropMatViewQueries.map(q => this.query(q["query"])));
+            }
 
             // ignore spatial_ref_sys; it's a special table supporting PostGIS
             // TODO generalize this as this.driver.ignoreTables
@@ -1926,6 +1931,14 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
             .forEach(it => sql += `; COMMENT ON COLUMN ${this.escapePath(table)}."${it.name}" IS ${this.escapeComment(it.comment)}`);
 
         return new Query(sql);
+    }
+
+    /**
+     * Loads Postgres version.
+     */
+    protected async getVersion(): Promise<string> {
+        const result = await this.query(`SHOW SERVER_VERSION`);
+        return result[0]["server_version"];
     }
 
     /**
