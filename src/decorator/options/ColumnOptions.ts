@@ -1,12 +1,11 @@
-import {ColumnType} from "../../driver/types/ColumnTypes";
-import {ValueTransformer} from "./ValueTransformer";
-import {ColumnCommonOptions} from "./ColumnCommonOptions";
+import { ColumnType } from "../../driver/types/ColumnTypes";
+import { ValueTransformer } from "./ValueTransformer";
+import { ColumnCommonOptions } from "./ColumnCommonOptions";
 
 /**
  * Describes all column's options.
  */
 export interface ColumnOptions extends ColumnCommonOptions {
-
     /**
      * Column type. Must be one of the value from the ColumnTypes class.
      */
@@ -21,7 +20,7 @@ export interface ColumnOptions extends ColumnCommonOptions {
      * Column type's length. Used only on some column types.
      * For example type = "string" and length = "100" means that ORM will create a column with type varchar(100).
      */
-    length?: string|number;
+    length?: string | number;
 
     /**
      * Column type's display width. Used only on some column types in MySQL.
@@ -65,9 +64,14 @@ export interface ColumnOptions extends ColumnCommonOptions {
     insert?: boolean;
 
     /**
-     * Default database value.
+     * Set the default value on insert at the database level
      */
     default?: any;
+
+    /**
+     * Set the default value on insert at the ORM level. Overrides database default if set.
+     */
+    calculatedDefault?: any;
 
     /**
      * ON UPDATE trigger. Works only for MySQL.
@@ -94,7 +98,7 @@ export interface ColumnOptions extends ColumnCommonOptions {
      * The precision for a decimal (exact numeric) column (applies only for decimal column), which is the maximum
      * number of digits that are stored for the values.
      */
-    precision?: number|null;
+    precision?: number | null;
 
     /**
      * The scale for a decimal (exact numeric) column (applies only for decimal column), which represents the number
@@ -127,7 +131,7 @@ export interface ColumnOptions extends ColumnCommonOptions {
     /**
      * Array of possible enumerated values.
      */
-    enum?: (string|number)[]|Object;
+    enum?: (string | number)[] | Object;
     /**
      * Exact name of enum
      */
@@ -141,13 +145,13 @@ export interface ColumnOptions extends ColumnCommonOptions {
     /**
      * Generated column type. Supports only in MySQL.
      */
-    generatedType?: "VIRTUAL"|"STORED";
+    generatedType?: "VIRTUAL" | "STORED";
 
     /**
      * Return type of HSTORE column.
      * Returns value as string or as object.
      */
-    hstoreType?: "object"|"string";
+    hstoreType?: "object" | "string";
 
     /**
      * Indicates if this column is an array.
@@ -160,7 +164,7 @@ export interface ColumnOptions extends ColumnCommonOptions {
      * Specifies a value transformer that is to be used to (un)marshal
      * this column when reading or writing to the database.
      */
-    transformer?: ValueTransformer|ValueTransformer[];
+    transformer?: ValueTransformer | ValueTransformer[];
 
     /**
      * Spatial Feature Type (Geometry, Point, Polygon, etc.)

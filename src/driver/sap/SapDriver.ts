@@ -1,17 +1,23 @@
-import {ColumnType, Connection, EntityMetadata, ObjectLiteral, TableColumn} from "../..";
-import {DriverPackageNotInstalledError} from "../../error/DriverPackageNotInstalledError";
-import {ColumnMetadata} from "../../metadata/ColumnMetadata";
-import {PlatformTools} from "../../platform/PlatformTools";
-import {RdbmsSchemaBuilder} from "../../schema-builder/RdbmsSchemaBuilder";
-import {ApplyValueTransformers} from "../../util/ApplyValueTransformers";
-import {DateUtils} from "../../util/DateUtils";
-import {OrmUtils} from "../../util/OrmUtils";
-import {Driver} from "../Driver";
-import {DataTypeDefaults} from "../types/DataTypeDefaults";
-import {MappedColumnTypes} from "../types/MappedColumnTypes";
-import {SapConnectionOptions} from "./SapConnectionOptions";
-import {SapQueryRunner} from "./SapQueryRunner";
-import {ReplicationMode} from "../types/ReplicationMode";
+import {
+    ColumnType,
+    Connection,
+    EntityMetadata,
+    ObjectLiteral,
+    TableColumn,
+} from "../..";
+import { DriverPackageNotInstalledError } from "../../error/DriverPackageNotInstalledError";
+import { ColumnMetadata } from "../../metadata/ColumnMetadata";
+import { PlatformTools } from "../../platform/PlatformTools";
+import { RdbmsSchemaBuilder } from "../../schema-builder/RdbmsSchemaBuilder";
+import { ApplyValueTransformers } from "../../util/ApplyValueTransformers";
+import { DateUtils } from "../../util/DateUtils";
+import { OrmUtils } from "../../util/OrmUtils";
+import { Driver } from "../Driver";
+import { DataTypeDefaults } from "../types/DataTypeDefaults";
+import { MappedColumnTypes } from "../types/MappedColumnTypes";
+import { SapConnectionOptions } from "./SapConnectionOptions";
+import { SapQueryRunner } from "./SapQueryRunner";
+import { ReplicationMode } from "../types/ReplicationMode";
 
 /**
  * Organizes communication with SAP Hana DBMS.
@@ -19,7 +25,6 @@ import {ReplicationMode} from "../types/ReplicationMode";
  * todo: looks like there is no built in support for connection pooling, we need to figure out something
  */
 export class SapDriver implements Driver {
-
     // -------------------------------------------------------------------------
     // Public Properties
     // -------------------------------------------------------------------------
@@ -110,10 +115,7 @@ export class SapDriver implements Driver {
     /**
      * Gets list of spatial column data types.
      */
-    spatialTypes: ColumnType[] = [
-        "st_geometry",
-        "st_point",
-    ];
+    spatialTypes: ColumnType[] = ["st_geometry", "st_point"];
 
     /**
      * Gets list of column data types that support length by a driver.
@@ -123,22 +125,18 @@ export class SapDriver implements Driver {
         "nvarchar",
         "alphanum",
         "shorttext",
-        "varbinary"
+        "varbinary",
     ];
 
     /**
      * Gets list of column data types that support precision by a driver.
      */
-    withPrecisionColumnTypes: ColumnType[] = [
-        "decimal",
-    ];
+    withPrecisionColumnTypes: ColumnType[] = ["decimal"];
 
     /**
      * Gets list of column data types that support scale by a driver.
      */
-    withScaleColumnTypes: ColumnType[] = [
-        "decimal",
-    ];
+    withScaleColumnTypes: ColumnType[] = ["decimal"];
 
     /**
      * Orm has special columns and we need to know what database column types should be for those types.
@@ -175,13 +173,13 @@ export class SapDriver implements Driver {
      * Used in the cases when length/precision/scale is not specified by user.
      */
     dataTypeDefaults: DataTypeDefaults = {
-        "char": { length: 1 },
-        "nchar": { length: 1 },
-        "varchar": { length: 255 },
-        "nvarchar": { length: 255 },
-        "shorttext": { length: 255 },
-        "varbinary": { length: 255 },
-        "decimal": { precision: 18, scale: 0 },
+        char: { length: 1 },
+        nchar: { length: 1 },
+        varchar: { length: 255 },
+        nvarchar: { length: 255 },
+        shorttext: { length: 255 },
+        varbinary: { length: 255 },
+        decimal: { precision: 18, scale: 0 },
     };
 
     /**
@@ -216,30 +214,45 @@ export class SapDriver implements Driver {
             port: this.options.port,
             userName: this.options.username,
             password: this.options.password,
-            ...this.options.extra
+            ...this.options.extra,
         };
 
-        if (this.options.database) dbParams.databaseName = this.options.database;
+        if (this.options.database)
+            dbParams.databaseName = this.options.database;
         if (this.options.encrypt) dbParams.encrypt = this.options.encrypt;
-        if (this.options.sslValidateCertificate) dbParams.validateCertificate = this.options.sslValidateCertificate;
+        if (this.options.sslValidateCertificate)
+            dbParams.validateCertificate = this.options.sslValidateCertificate;
         if (this.options.key) dbParams.key = this.options.key;
         if (this.options.cert) dbParams.cert = this.options.cert;
         if (this.options.ca) dbParams.ca = this.options.ca;
 
         // pool options
         const options: any = {
-            min: this.options.pool && this.options.pool.min ? this.options.pool.min : 1,
-            max: this.options.pool && this.options.pool.max ? this.options.pool.max : 10,
+            min:
+                this.options.pool && this.options.pool.min
+                    ? this.options.pool.min
+                    : 1,
+            max:
+                this.options.pool && this.options.pool.max
+                    ? this.options.pool.max
+                    : 10,
         };
 
-        if (this.options.pool && this.options.pool.checkInterval) options.checkInterval = this.options.pool.checkInterval;
-        if (this.options.pool && this.options.pool.maxWaitingRequests) options.maxWaitingRequests = this.options.pool.maxWaitingRequests;
-        if (this.options.pool && this.options.pool.requestTimeout) options.requestTimeout = this.options.pool.requestTimeout;
-        if (this.options.pool && this.options.pool.idleTimeout) options.idleTimeout = this.options.pool.idleTimeout;
+        if (this.options.pool && this.options.pool.checkInterval)
+            options.checkInterval = this.options.pool.checkInterval;
+        if (this.options.pool && this.options.pool.maxWaitingRequests)
+            options.maxWaitingRequests = this.options.pool.maxWaitingRequests;
+        if (this.options.pool && this.options.pool.requestTimeout)
+            options.requestTimeout = this.options.pool.requestTimeout;
+        if (this.options.pool && this.options.pool.idleTimeout)
+            options.idleTimeout = this.options.pool.idleTimeout;
 
         const { logger } = this.connection;
 
-        const poolErrorHandler = options.poolErrorHandler || ((error: any) => logger.log("warn", `SAP Hana pool raised an error. ${error}`));
+        const poolErrorHandler =
+            options.poolErrorHandler ||
+            ((error: any) =>
+                logger.log("warn", `SAP Hana pool raised an error. ${error}`));
         this.client.eventEmitter.on("poolError", poolErrorHandler);
 
         // create the pool
@@ -282,19 +295,29 @@ export class SapDriver implements Driver {
      * Replaces parameters in the given sql with special escaping character
      * and an array of parameter names to be passed to a query.
      */
-    escapeQueryWithParameters(sql: string, parameters: ObjectLiteral, nativeParameters: ObjectLiteral): [string, any[]] {
-        const builtParameters: any[] = Object.keys(nativeParameters).map(key => {
+    escapeQueryWithParameters(
+        sql: string,
+        parameters: ObjectLiteral,
+        nativeParameters: ObjectLiteral
+    ): [string, any[]] {
+        const builtParameters: any[] = Object.keys(nativeParameters).map(
+            (key) => {
+                if (nativeParameters[key] instanceof Date)
+                    return DateUtils.mixedDateToDatetimeString(
+                        nativeParameters[key],
+                        true
+                    );
 
-            if (nativeParameters[key] instanceof Date)
-                return DateUtils.mixedDateToDatetimeString(nativeParameters[key], true);
-
-            return nativeParameters[key];
-        });
+                return nativeParameters[key];
+            }
+        );
 
         if (!parameters || !Object.keys(parameters).length)
             return [sql, builtParameters];
 
-        const keys = Object.keys(parameters).map(parameter => "(:(\\.\\.\\.)?" + parameter + "\\b)").join("|");
+        const keys = Object.keys(parameters)
+            .map((parameter) => "(:(\\.\\.\\.)?" + parameter + "\\b)")
+            .join("|");
         sql = sql.replace(new RegExp(keys, "g"), (key: string): string => {
             let value: any;
             let isArray = false;
@@ -306,18 +329,17 @@ export class SapDriver implements Driver {
             }
 
             if (isArray) {
-                return value.map((v: any) => {
-                    builtParameters.push(v);
-                    return "?";
-                    // return "$" + builtParameters.length;
-                }).join(", ");
-
+                return value
+                    .map((v: any) => {
+                        builtParameters.push(v);
+                        return "?";
+                        // return "$" + builtParameters.length;
+                    })
+                    .join(", ");
             } else if (value instanceof Function) {
                 return value();
-
             } else if (value instanceof Date) {
                 return DateUtils.mixedDateToDatetimeString(value, true);
-
             } else {
                 builtParameters.push(value);
                 return "?";
@@ -347,36 +369,32 @@ export class SapDriver implements Driver {
      */
     preparePersistentValue(value: any, columnMetadata: ColumnMetadata): any {
         if (columnMetadata.transformer)
-            value = ApplyValueTransformers.transformTo(columnMetadata.transformer, value);
+            value = ApplyValueTransformers.transformTo(
+                columnMetadata.transformer,
+                value
+            );
 
-        if (value === null || value === undefined)
-            return value;
+        if (value === null || value === undefined) return value;
 
         if (columnMetadata.type === Boolean) {
             return value === true ? 1 : 0;
-
         } else if (columnMetadata.type === "date") {
             return DateUtils.mixedDateToDateString(value);
-
         } else if (columnMetadata.type === "time") {
             return DateUtils.mixedDateToTimeString(value);
-
-        } else if (columnMetadata.type === "timestamp"
-            || columnMetadata.type === Date) {
+        } else if (
+            columnMetadata.type === "timestamp" ||
+            columnMetadata.type === Date
+        ) {
             return DateUtils.mixedDateToDatetimeString(value, true);
-
         } else if (columnMetadata.type === "seconddate") {
             return DateUtils.mixedDateToDatetimeString(value, false);
-
         } else if (columnMetadata.type === "simple-array") {
             return DateUtils.simpleArrayToString(value);
-
         } else if (columnMetadata.type === "simple-json") {
             return DateUtils.simpleJsonToString(value);
-
         } else if (columnMetadata.type === "simple-enum") {
             return DateUtils.simpleEnumToString(value);
-
         } else if (columnMetadata.isArray) {
             return () => `ARRAY(${value.map((it: any) => `'${it}'`)})`;
         }
@@ -389,34 +407,38 @@ export class SapDriver implements Driver {
      */
     prepareHydratedValue(value: any, columnMetadata: ColumnMetadata): any {
         if (value === null || value === undefined)
-            return columnMetadata.transformer ? ApplyValueTransformers.transformFrom(columnMetadata.transformer, value) : value;
+            return columnMetadata.transformer
+                ? ApplyValueTransformers.transformFrom(
+                      columnMetadata.transformer,
+                      value
+                  )
+                : value;
 
         if (columnMetadata.type === Boolean) {
             value = value ? true : false;
-
-        } else if (columnMetadata.type === "timestamp"
-            || columnMetadata.type === "seconddate"
-            || columnMetadata.type === Date) {
+        } else if (
+            columnMetadata.type === "timestamp" ||
+            columnMetadata.type === "seconddate" ||
+            columnMetadata.type === Date
+        ) {
             value = DateUtils.normalizeHydratedDate(value);
-
         } else if (columnMetadata.type === "date") {
             value = DateUtils.mixedDateToDateString(value);
-
         } else if (columnMetadata.type === "time") {
             value = DateUtils.mixedTimeToString(value);
-
         } else if (columnMetadata.type === "simple-array") {
             value = DateUtils.stringToSimpleArray(value);
-
         } else if (columnMetadata.type === "simple-json") {
             value = DateUtils.stringToSimpleJson(value);
-
         } else if (columnMetadata.type === "simple-enum") {
             value = DateUtils.stringToSimpleEnum(value, columnMetadata);
         }
 
         if (columnMetadata.transformer)
-            value = ApplyValueTransformers.transformFrom(columnMetadata.transformer, value);
+            value = ApplyValueTransformers.transformFrom(
+                columnMetadata.transformer,
+                value
+            );
 
         return value;
     }
@@ -424,33 +446,33 @@ export class SapDriver implements Driver {
     /**
      * Creates a database type from a given column metadata.
      */
-    normalizeType(column: { type?: ColumnType, length?: number | string, precision?: number|null, scale?: number }): string {
+    normalizeType(column: {
+        type?: ColumnType;
+        length?: number | string;
+        precision?: number | null;
+        scale?: number;
+    }): string {
         if (column.type === Number || column.type === "int") {
             return "integer";
-
         } else if (column.type === String) {
             return "nvarchar";
-
         } else if (column.type === Date) {
             return "timestamp";
-
         } else if (column.type === Boolean) {
             return "boolean";
-
         } else if ((column.type as any) === Buffer) {
             return "blob";
-
         } else if (column.type === "uuid") {
             return "nvarchar";
-
-        } else if (column.type === "simple-array" || column.type === "simple-json") {
+        } else if (
+            column.type === "simple-array" ||
+            column.type === "simple-json"
+        ) {
             return "text";
-
         } else if (column.type === "simple-enum") {
             return "nvarchar";
-
         } else {
-            return column.type as string || "";
+            return (column.type as string) || "";
         }
     }
 
@@ -462,16 +484,33 @@ export class SapDriver implements Driver {
 
         if (typeof defaultValue === "number") {
             return "" + defaultValue;
-
         } else if (typeof defaultValue === "boolean") {
             return defaultValue === true ? "true" : "false";
-
         } else if (typeof defaultValue === "function") {
             return defaultValue();
-
         } else if (typeof defaultValue === "string") {
             return `'${defaultValue}'`;
+        } else {
+            return defaultValue;
+        }
+    }
 
+    /**
+     * Normalizes "calculatedDefault" value of the column.
+     */
+    normalizeCalculatedDefault(
+        columnMetadata: ColumnMetadata
+    ): string | undefined {
+        const defaultValue = columnMetadata.calculatedDefault;
+
+        if (typeof defaultValue === "number") {
+            return "" + defaultValue;
+        } else if (typeof defaultValue === "boolean") {
+            return defaultValue === true ? "true" : "false";
+        } else if (typeof defaultValue === "function") {
+            return defaultValue();
+        } else if (typeof defaultValue === "string") {
+            return `'${defaultValue}'`;
         } else {
             return defaultValue;
         }
@@ -481,18 +520,21 @@ export class SapDriver implements Driver {
      * Normalizes "isUnique" value of the column.
      */
     normalizeIsUnique(column: ColumnMetadata): boolean {
-        return column.entityMetadata.indices.some(idx => idx.isUnique && idx.columns.length === 1 && idx.columns[0] === column);
+        return column.entityMetadata.indices.some(
+            (idx) =>
+                idx.isUnique &&
+                idx.columns.length === 1 &&
+                idx.columns[0] === column
+        );
     }
 
     /**
      * Returns default column lengths, which is required on column creation.
      */
-    getColumnLength(column: ColumnMetadata|TableColumn): string {
-        if (column.length)
-            return column.length.toString();
+    getColumnLength(column: ColumnMetadata | TableColumn): string {
+        if (column.length) return column.length.toString();
 
-        if (column.generationStrategy === "uuid")
-            return "36";
+        if (column.generationStrategy === "uuid") return "36";
 
         switch (column.type) {
             case "varchar":
@@ -518,16 +560,21 @@ export class SapDriver implements Driver {
         // used 'getColumnLength()' method, because SqlServer sets `varchar` and `nvarchar` length to 1 by default.
         if (this.getColumnLength(column)) {
             type += `(${this.getColumnLength(column)})`;
-
-        } else if (column.precision !== null && column.precision !== undefined && column.scale !== null && column.scale !== undefined) {
+        } else if (
+            column.precision !== null &&
+            column.precision !== undefined &&
+            column.scale !== null &&
+            column.scale !== undefined
+        ) {
             type += `(${column.precision},${column.scale})`;
-
-        } else if (column.precision !== null && column.precision !== undefined) {
+        } else if (
+            column.precision !== null &&
+            column.precision !== undefined
+        ) {
             type += `(${column.precision})`;
         }
 
-        if (column.isArray)
-            type += " array";
+        if (column.isArray) type += " array";
 
         return type;
     }
@@ -554,17 +601,26 @@ export class SapDriver implements Driver {
      * Creates generated map of values generated or returned by database after INSERT query.
      */
     createGeneratedMap(metadata: EntityMetadata, insertResult: ObjectLiteral) {
-        const generatedMap = metadata.generatedColumns.reduce((map, generatedColumn) => {
-            let value: any;
-            if (generatedColumn.generationStrategy === "increment" && insertResult) {
-                value = insertResult;
-                // } else if (generatedColumn.generationStrategy === "uuid") {
-                //     console.log("getting db value:", generatedColumn.databaseName);
-                //     value = generatedColumn.getEntityValue(uuidMap);
-            }
+        const generatedMap = metadata.generatedColumns.reduce(
+            (map, generatedColumn) => {
+                let value: any;
+                if (
+                    generatedColumn.generationStrategy === "increment" &&
+                    insertResult
+                ) {
+                    value = insertResult;
+                    // } else if (generatedColumn.generationStrategy === "uuid") {
+                    //     console.log("getting db value:", generatedColumn.databaseName);
+                    //     value = generatedColumn.getEntityValue(uuidMap);
+                }
 
-            return OrmUtils.mergeDeep(map, generatedColumn.createValueMap(value));
-        }, {} as ObjectLiteral);
+                return OrmUtils.mergeDeep(
+                    map,
+                    generatedColumn.createValueMap(value)
+                );
+            },
+            {} as ObjectLiteral
+        );
 
         return Object.keys(generatedMap).length > 0 ? generatedMap : undefined;
     }
@@ -573,11 +629,15 @@ export class SapDriver implements Driver {
      * Differentiate columns of this table and columns from the given column metadatas columns
      * and returns only changed.
      */
-    findChangedColumns(tableColumns: TableColumn[], columnMetadatas: ColumnMetadata[]): ColumnMetadata[] {
-        return columnMetadatas.filter(columnMetadata => {
-            const tableColumn = tableColumns.find(c => c.name === columnMetadata.databaseName);
-            if (!tableColumn)
-                return false; // we don't need new columns, we only need exist and changed
+    findChangedColumns(
+        tableColumns: TableColumn[],
+        columnMetadatas: ColumnMetadata[]
+    ): ColumnMetadata[] {
+        return columnMetadatas.filter((columnMetadata) => {
+            const tableColumn = tableColumns.find(
+                (c) => c.name === columnMetadata.databaseName
+            );
+            if (!tableColumn) return false; // we don't need new columns, we only need exist and changed
 
             // console.log("table:", columnMetadata.entityMetadata.tableName);
             // console.log("name:", tableColumn.name, columnMetadata.databaseName);
@@ -595,19 +655,27 @@ export class SapDriver implements Driver {
             // console.log("==========================================");
 
             const normalizeDefault = this.normalizeDefault(columnMetadata);
-            const hanaNullComapatibleDefault = normalizeDefault == null ? undefined : normalizeDefault;
+            const hanaNullComapatibleDefault =
+                normalizeDefault == null ? undefined : normalizeDefault;
 
-            return tableColumn.name !== columnMetadata.databaseName
-                || tableColumn.type !== this.normalizeType(columnMetadata)
-                || columnMetadata.length && tableColumn.length !== this.getColumnLength(columnMetadata)
-                || tableColumn.precision !== columnMetadata.precision
-                || tableColumn.scale !== columnMetadata.scale
+            return (
+                tableColumn.name !== columnMetadata.databaseName ||
+                tableColumn.type !== this.normalizeType(columnMetadata) ||
+                (columnMetadata.length &&
+                    tableColumn.length !==
+                        this.getColumnLength(columnMetadata)) ||
+                tableColumn.precision !== columnMetadata.precision ||
+                tableColumn.scale !== columnMetadata.scale ||
                 // || tableColumn.comment !== columnMetadata.comment || // todo
-                || (!tableColumn.isGenerated && (hanaNullComapatibleDefault !== tableColumn.default)) // we included check for generated here, because generated columns already can have default values
-                || tableColumn.isPrimary !== columnMetadata.isPrimary
-                || tableColumn.isNullable !== columnMetadata.isNullable
-                || tableColumn.isUnique !== this.normalizeIsUnique(columnMetadata)
-                || (columnMetadata.generationStrategy !== "uuid" && tableColumn.isGenerated !== columnMetadata.isGenerated);
+                (!tableColumn.isGenerated &&
+                    hanaNullComapatibleDefault !== tableColumn.default) || // we included check for generated here, because generated columns already can have default values
+                tableColumn.isPrimary !== columnMetadata.isPrimary ||
+                tableColumn.isNullable !== columnMetadata.isNullable ||
+                tableColumn.isUnique !==
+                    this.normalizeIsUnique(columnMetadata) ||
+                (columnMetadata.generationStrategy !== "uuid" &&
+                    tableColumn.isGenerated !== columnMetadata.isGenerated)
+            );
         });
     }
 
@@ -649,17 +717,19 @@ export class SapDriver implements Driver {
     protected loadDependencies(): void {
         try {
             this.client = PlatformTools.load("hdb-pool");
-
-        } catch (e) { // todo: better error for browser env
+        } catch (e) {
+            // todo: better error for browser env
             throw new DriverPackageNotInstalledError("SAP Hana", "hdb-pool");
         }
 
         try {
             PlatformTools.load("@sap/hana-client");
-
-        } catch (e) { // todo: better error for browser env
-            throw new DriverPackageNotInstalledError("SAP Hana", "@sap/hana-client");
+        } catch (e) {
+            // todo: better error for browser env
+            throw new DriverPackageNotInstalledError(
+                "SAP Hana",
+                "@sap/hana-client"
+            );
         }
     }
-
 }
