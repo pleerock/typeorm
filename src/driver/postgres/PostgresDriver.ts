@@ -19,6 +19,15 @@ import {ReplicationMode} from "../types/ReplicationMode";
 import {PostgresConnectionCredentialsOptions} from "./PostgresConnectionCredentialsOptions";
 import {PostgresConnectionOptions} from "./PostgresConnectionOptions";
 import {PostgresQueryRunner} from "./PostgresQueryRunner";
+import {VersionUtils} from "../../util/VersionUtils";
+
+/**
+ * The version after which Postgres added support for SQL - Compliant IDENTITY Column. It will be used to check
+ * against retrieved version of server
+ *
+ * @see PostgresDriver.checkForIdentityColumnSupport
+ */
+const POSTGRES_IDENTITY_COLUMN_SUPPORT_VERSION = "10.0";
 
 /**
  * Organizes communication with PostgreSQL DBMS.
@@ -245,6 +254,17 @@ export class PostgresDriver implements Driver {
      */
     maxAliasLength = 63;
 
+    /**
+     * The version of the PostgreSQL Database Server where the client connects to. It will be used as a cache variable
+     * placeholder to avoid re-querying the server
+     */
+    private serverVersion: string;
+
+    /**
+     * Helper variable placeholder to use in cases where Postgres 10+ Identity column is supported
+     */
+    private identityColumnSupported = false;
+
     // -------------------------------------------------------------------------
     // Constructor
     // -------------------------------------------------------------------------
@@ -296,6 +316,8 @@ export class PostgresDriver implements Driver {
             this.master = await this.createPool(this.options, this.options);
             this.database = this.options.database;
         }
+        const serverVersion = await this.getServerVersion();
+        this.identityColumnSupported = this.checkForIdentityColumnSupport(serverVersion);
     }
 
     /**
@@ -995,9 +1017,52 @@ export class PostgresDriver implements Driver {
         }
     }
 
+    /**
+     * Public method than can be used to return connected database server version. It will store the value retrieved in
+     * order to avoid re-querying the database. Cache option can be overridden by providing appropriate flag value.
+     *
+     * @param forceQuery - If true, query the server no matter if cache value exists or not
+     */
+    async getServerVersion(forceQuery = false) {
+        const { serverVersion } = this;
+        if (serverVersion && !forceQuery) { // we already have retrieved serverVersion and re-query not required
+            return serverVersion;
+        }
+        // have to re-query
+        this.serverVersion = await this.queryServerVersion(); // assign to cache
+        return this.serverVersion;
+    }
+
+    /**
+     * Getter function for POSTGRES 10+ IDENTITY Column support
+     */
+    supportsIdentityColumn() {
+        if (!this.serverVersion) {
+            throw new Error("Cannot show IDENTITY column support before querying database server version");
+        }
+        return this.identityColumnSupported;
+    }
+
     // -------------------------------------------------------------------------
     // Protected Methods
     // -------------------------------------------------------------------------
+
+    /**
+     * Try to query database server for version
+     */
+    protected async queryServerVersion(): Promise<string> {
+        const { connection } = this;
+        let [{ server_version: serverVersion }] = await connection.query("SHOW SERVER_VERSION");
+        serverVersion = serverVersion.split(" ")[0]; // keep only numbers when format ex. 13.2 (Debian 13.2-1.pgdg100+1)
+        return serverVersion;
+    }
+
+    /**
+     * Check whether retrieved version is greater than the one required to support IDENTITY column
+     */
+    protected checkForIdentityColumnSupport(versionToCheck: string) {
+        return VersionUtils.isGreaterOrEqual(versionToCheck, POSTGRES_IDENTITY_COLUMN_SUPPORT_VERSION);
+    }
 
     /**
      * If driver dependency is not given explicitly, then try to load it via "require".
