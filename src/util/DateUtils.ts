@@ -1,4 +1,5 @@
-import {ColumnMetadata} from "../metadata/ColumnMetadata";
+import { ColumnMetadata } from "../metadata/ColumnMetadata";
+import { parseISO } from "date-fns";
 
 /**
  * Provides utilities to transform hydrated and persisted data.
@@ -33,7 +34,21 @@ export class DateUtils {
      * Converts given value into date object.
      */
     static mixedDateToDate(mixedDate: Date|string, toUtc: boolean = false, useMilliseconds = true): Date {
-        let date = typeof mixedDate === "string" ? new Date(mixedDate) : mixedDate;
+        /**
+         * new Date(ISOString) is not a reliable parser to date strings.
+         * It's better to use 'date-fns' parser to parser string in ISO Format.
+         *
+         * The problem here is with wrong timezone.
+         *
+         * For example:
+         *
+         * ``new Date('2021-04-28')`` will generate `2021-04-28T00:00:00.000Z`
+         * in my timezone, which is not true for my timezone (GMT-0300). It should
+         * be `2021-04-28T03:00:00.000Z` as `new Date(2021, 3, 28)` generates.
+         *
+         * https://stackoverflow.com/a/2587398
+         */
+        let date = typeof mixedDate === "string" ? parseISO(mixedDate) : mixedDate;
 
         if (toUtc)
             date = new Date(
