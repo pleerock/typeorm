@@ -385,30 +385,34 @@ export class CockroachDriver implements Driver {
         if (!parameters || !Object.keys(parameters).length)
             return [sql, builtParameters];
 
+        const queryPlaceholders: ObjectLiteral = {};
+        Object.keys(nativeParameters).map((key, index) => { queryPlaceholders[key] = "$" + index + 1; });
+
         const keys = Object.keys(parameters).map(parameter => "(:(\\.\\.\\.)?" + parameter + "\\b)").join("|");
         sql = sql.replace(new RegExp(keys, "g"), (key: string): string => {
-            let value: any;
-            let isArray = false;
-            if (key.substr(0, 4) === ":...") {
-                isArray = true;
-                value = parameters[key.substr(4)];
-            } else {
-                value = parameters[key.substr(1)];
+            const isArray = key.substr(0, 4) === ":...";
+            const cleanKey = isArray ? key.substr(4) : key.substr(1);
+            const value = parameters[cleanKey];
+
+            if (value instanceof Function) {
+                return value();
+            }
+
+            if (queryPlaceholders.hasOwnProperty(cleanKey)) {
+                return queryPlaceholders[cleanKey];
             }
 
             if (isArray) {
-                return value.map((v: any) => {
+                queryPlaceholders[cleanKey] = value.map((v: any) => {
                     builtParameters.push(v);
                     return "$" + builtParameters.length;
                 }).join(", ");
-
-            } else if (value instanceof Function) {
-                return value();
-
             } else {
                 builtParameters.push(value);
-                return "$" + builtParameters.length;
+                queryPlaceholders[cleanKey] = "$" + builtParameters.length;
             }
+
+            return queryPlaceholders[cleanKey];
         }); // todo: make replace only in value statements, otherwise problems
         return [sql, builtParameters];
     }
