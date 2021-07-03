@@ -895,7 +895,7 @@ export abstract class QueryBuilder<Entity> {
 
                         return columns.map((column, columnIndex) => {
 
-                            const aliasPath = this.expressionMap.aliasNamePrefixingEnabled ? `${this.alias}.${propertyPath}` : column.propertyPath;
+                            const aliasPath = this.expressionMap.aliasNamePrefixingEnabled ? `${this.alias}.${column.propertyPath}` : column.propertyPath;
                             let parameterValue = column.getEntityValue(where, true);
 
                             if (parameterValue === null) {
