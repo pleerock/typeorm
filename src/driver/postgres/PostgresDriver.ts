@@ -668,6 +668,10 @@ export class PostgresDriver implements Driver {
      * Creates a database type from a given column metadata.
      */
     normalizeType(column: { type?: ColumnType, length?: number | string, precision?: number|null, scale?: number, isArray?: boolean }): string {
+        if (column.type && this.options.skipTypeNormalize) {
+            return column.type as string;
+        }
+
         if (column.type === Number || column.type === "int" || column.type === "int4") {
             return "integer";
 
