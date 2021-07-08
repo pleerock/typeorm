@@ -133,8 +133,13 @@ export class MongoEntityManager extends EntityManager {
         const objectIdInstance = PlatformTools.load("mongodb").ObjectID;
         query["_id"] = {
             $in: ids.map(id => {
-                if (id instanceof objectIdInstance)
+                if (id instanceof objectIdInstance) {
                     return id;
+                }
+
+                if (typeof id !== "object" || id === null) {
+                    return id;
+                }
 
                 return id[metadata.objectIdColumn!.propertyName];
             })
@@ -161,7 +166,7 @@ export class MongoEntityManager extends EntityManager {
                           optionsOrConditions?: string | string[] | number | number[] | Date | Date[] | ObjectID | ObjectID[] | FindOneOptions<Entity> | DeepPartial<Entity>,
                           maybeOptions?: FindOneOptions<Entity>): Promise<Entity | undefined> {
         const objectIdInstance = PlatformTools.load("mongodb").ObjectID;
-        const id = (optionsOrConditions instanceof objectIdInstance) || typeof optionsOrConditions === "string" ? optionsOrConditions : undefined;
+        const id = (optionsOrConditions instanceof objectIdInstance) || typeof optionsOrConditions === "string" || typeof optionsOrConditions === "number" ? optionsOrConditions : undefined;
         const findOneOptionsOrConditions = (id ? maybeOptions : optionsOrConditions) as any;
         const query = this.convertFindOneOptionsOrConditionsToMongodbQuery(findOneOptionsOrConditions) || {};
         if (id) {
