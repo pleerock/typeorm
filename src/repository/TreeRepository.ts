@@ -1,8 +1,9 @@
-import {Repository} from "./Repository";
-import {SelectQueryBuilder} from "../query-builder/SelectQueryBuilder";
-import {ObjectLiteral} from "../common/ObjectLiteral";
-import {AbstractSqliteDriver} from "../driver/sqlite-abstract/AbstractSqliteDriver";
+import { Repository } from "./Repository";
+import { SelectQueryBuilder } from "../query-builder/SelectQueryBuilder";
+import { ObjectLiteral } from "../common/ObjectLiteral";
+import { AbstractSqliteDriver } from "../driver/sqlite-abstract/AbstractSqliteDriver";
 import { TypeORMError } from "../error/TypeORMError";
+import { FindTreesOptions } from "./FindTreesOptions";
 
 /**
  * Repository with additional functions to work with trees.
@@ -18,9 +19,9 @@ export class TreeRepository<Entity> extends Repository<Entity> {
     /**
      * Gets complete trees for all roots in the table.
      */
-    async findTrees(): Promise<Entity[]> {
+    async findTrees(options?: FindTreesOptions): Promise<Entity[]> {
         const roots = await this.findRoots();
-        await Promise.all(roots.map(root => this.findDescendantsTree(root)));
+        await Promise.all(roots.map(root => this.findDescendantsTree(root, options)));
         return roots;
     }
 
@@ -51,14 +52,18 @@ export class TreeRepository<Entity> extends Repository<Entity> {
     /**
      * Gets all children (descendants) of the given entity. Returns them in a tree - nested into each other.
      */
-    findDescendantsTree(entity: Entity): Promise<Entity> {
+    findDescendantsTree(entity: Entity, options?: FindTreesOptions): Promise<Entity> {
         // todo: throw exception if there is no column of this relation?
         return this
             .createDescendantsQueryBuilder("treeEntity", "treeClosure", entity)
             .getRawAndEntities()
             .then(entitiesAndScalars => {
                 const relationMaps = this.createRelationMaps("treeEntity", entitiesAndScalars.raw);
-                this.buildChildrenEntityTree(entity, entitiesAndScalars.entities, relationMaps);
+                this.buildChildrenEntityTree(entity, entitiesAndScalars.entities, relationMaps, {
+                    depth: -1,
+                    ...options
+
+                });
                 return entity;
             });
     }
@@ -256,14 +261,18 @@ export class TreeRepository<Entity> extends Repository<Entity> {
         });
     }
 
-    protected buildChildrenEntityTree(entity: any, entities: any[], relationMaps: { id: any, parentId: any }[]): void {
+    protected buildChildrenEntityTree(entity: any, entities: any[], relationMaps: { id: any, parentId: any }[], options: (FindTreesOptions & { depth: number })): void {
         const childProperty = this.metadata.treeChildrenRelation!.propertyName;
+        if (options.depth === 0) {
+            entity[childProperty] = [];
+            return;
+        }
         const parentEntityId = this.metadata.primaryColumns[0].getEntityValue(entity);
         const childRelationMaps = relationMaps.filter(relationMap => relationMap.parentId === parentEntityId);
         const childIds = new Set(childRelationMaps.map(relationMap => relationMap.id));
         entity[childProperty] = entities.filter(entity => childIds.has(this.metadata.primaryColumns[0].getEntityValue(entity)));
         entity[childProperty].forEach((childEntity: any) => {
-            this.buildChildrenEntityTree(childEntity, entities, relationMaps);
+            this.buildChildrenEntityTree(childEntity, entities, relationMaps, { ...options, depth: options.depth - 1 });
         });
     }
 

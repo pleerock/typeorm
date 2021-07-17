@@ -1,7 +1,7 @@
 import "reflect-metadata";
-import {Category} from "./entity/Category";
-import {Connection} from "../../../../src/connection/Connection";
-import {closeTestingConnections, createTestingConnections, reloadTestingDatabases} from "../../../utils/test-utils";
+import { Category } from "./entity/Category";
+import { Connection } from "../../../../src/connection/Connection";
+import { closeTestingConnections, createTestingConnections, reloadTestingDatabases } from "../../../utils/test-utils";
 
 describe("tree tables > closure-table", () => {
 
@@ -188,4 +188,414 @@ describe("tree tables > closure-table", () => {
         // a1ChildrenNames2.should.deep.include("a12");
     })));
 
+    describe("findTrees() tests", () => {
+        it("findTrees should load all category roots and attached children", () => Promise.all(connections.map(async connection => {
+            const categoryRepository = connection.getTreeRepository(Category);
+
+            const a1 = new Category();
+            a1.name = "a1";
+
+            const a11 = new Category();
+            a11.name = "a11";
+
+            const a12 = new Category();
+            a12.name = "a12";
+
+            const a111 = new Category();
+            a111.name = "a111";
+
+            const a112 = new Category();
+            a112.name = "a112";
+
+            a1.childCategories = [a11, a12];
+            a11.childCategories = [a111, a112];
+            await categoryRepository.save(a1);
+
+            const categoriesTree = await categoryRepository.findTrees();
+            categoriesTree.should.be.eql([
+                {
+                    id: a1.id,
+                    name: "a1",
+                    childCategories: [
+                        {
+                            id: a11.id,
+                            name: "a11",
+                            childCategories: [
+                                {
+                                    id: a111.id,
+                                    name: "a111",
+                                    childCategories: []
+                                },
+                                {
+                                    id: a112.id,
+                                    name: "a112",
+                                    childCategories: []
+                                }
+                            ]
+                        },
+                        {
+                            id: a12.id,
+                            name: "a12",
+                            childCategories: []
+                        }
+                    ]
+                }
+            ]);
+        })));
+
+        it("findTrees should load multiple category roots if they exist", () => Promise.all(connections.map(async connection => {
+            const categoryRepository = connection.getTreeRepository(Category);
+
+            const a1 = new Category();
+            a1.name = "a1";
+
+            const a11 = new Category();
+            a11.name = "a11";
+
+            const a12 = new Category();
+            a12.name = "a12";
+
+            const a111 = new Category();
+            a111.name = "a111";
+
+            const a112 = new Category();
+            a112.name = "a112";
+
+            a1.childCategories = [a11, a12];
+            a11.childCategories = [a111, a112];
+            await categoryRepository.save(a1);
+
+            const b1 = new Category();
+            b1.name = "b1";
+
+            const b11 = new Category();
+            b11.name = "b11";
+
+            const b12 = new Category();
+            b12.name = "b12";
+
+            b1.childCategories = [b11, b12];
+            await categoryRepository.save(b1);
+
+            const categoriesTree = await categoryRepository.findTrees();
+            categoriesTree.should.be.eql([
+                {
+                    id: a1.id,
+                    name: "a1",
+                    childCategories: [
+                        {
+                            id: a11.id,
+                            name: "a11",
+                            childCategories: [
+                                {
+                                    id: a111.id,
+                                    name: "a111",
+                                    childCategories: []
+                                },
+                                {
+                                    id: a112.id,
+                                    name: "a112",
+                                    childCategories: []
+                                }
+                            ]
+                        },
+                        {
+                            id: a12.id,
+                            name: "a12",
+                            childCategories: []
+                        }
+                    ]
+                }, {
+                    id: b1.id,
+                    name: "b1",
+                    childCategories: [
+                        {
+                            id: b11.id,
+                            name: "b11",
+                            childCategories: []
+                        },
+                        {
+                            id: b12.id,
+                            name: "b12",
+                            childCategories: []
+                        }
+                    ]
+                }
+            ]);
+        })));
+
+        it("findTrees should filter by depth if optionally provided", () => Promise.all(connections.map(async connection => {
+            const categoryRepository = connection.getTreeRepository(Category);
+
+            const a1 = new Category();
+            a1.name = "a1";
+
+            const a11 = new Category();
+            a11.name = "a11";
+
+            const a12 = new Category();
+            a12.name = "a12";
+
+            const a111 = new Category();
+            a111.name = "a111";
+
+            const a112 = new Category();
+            a112.name = "a112";
+
+            a1.childCategories = [a11, a12];
+            a11.childCategories = [a111, a112];
+            await categoryRepository.save(a1);
+
+            const categoriesTree = await categoryRepository.findTrees();
+            categoriesTree.should.be.eql([
+                {
+                    id: a1.id,
+                    name: "a1",
+                    childCategories: [
+                        {
+                            id: a11.id,
+                            name: "a11",
+                            childCategories: [
+                                {
+                                    id: a111.id,
+                                    name: "a111",
+                                    childCategories: []
+                                },
+                                {
+                                    id: a112.id,
+                                    name: "a112",
+                                    childCategories: []
+                                }
+                            ]
+                        },
+                        {
+                            id: a12.id,
+                            name: "a12",
+                            childCategories: []
+                        }
+                    ]
+                }
+            ]);
+
+            const categoriesTreeWithEmptyOptions = await categoryRepository.findTrees({});
+            categoriesTreeWithEmptyOptions.should.be.eql([
+                {
+                    id: a1.id,
+                    name: "a1",
+                    childCategories: [
+                        {
+                            id: a11.id,
+                            name: "a11",
+                            childCategories: [
+                                {
+                                    id: a111.id,
+                                    name: "a111",
+                                    childCategories: []
+                                },
+                                {
+                                    id: a112.id,
+                                    name: "a112",
+                                    childCategories: []
+                                }
+                            ]
+                        },
+                        {
+                            id: a12.id,
+                            name: "a12",
+                            childCategories: []
+                        }
+                    ]
+                }
+            ]);
+
+            const categoriesTreeWithDepthZero = await categoryRepository.findTrees({ depth: 0 });
+            categoriesTreeWithDepthZero.should.be.eql([
+                {
+                    id: a1.id,
+                    name: "a1",
+                    childCategories: []
+                }
+            ]);
+
+            const categoriesTreeWithDepthOne = await categoryRepository.findTrees({ depth: 1 });
+            categoriesTreeWithDepthOne.should.be.eql([
+                {
+                    id: a1.id,
+                    name: "a1",
+                    childCategories: [
+                        {
+                            id: a11.id,
+                            name: "a11",
+                            childCategories: []
+                        },
+                        {
+                            id: a12.id,
+                            name: "a12",
+                            childCategories: []
+                        }
+                    ]
+                }
+            ]);
+        })));
+    });
+
+    describe("findDescendantsTree() tests", () => {
+        it("findDescendantsTree should load all category descendents and nested children", () => Promise.all(connections.map(async connection => {
+            const categoryRepository = connection.getTreeRepository(Category);
+
+            const a1 = new Category();
+            a1.name = "a1";
+
+            const a11 = new Category();
+            a11.name = "a11";
+
+            const a12 = new Category();
+            a12.name = "a12";
+
+            const a111 = new Category();
+            a111.name = "a111";
+
+            const a112 = new Category();
+            a112.name = "a112";
+
+            a1.childCategories = [a11, a12];
+            a11.childCategories = [a111, a112];
+            await categoryRepository.save(a1);
+
+            const categoriesTree = await categoryRepository.findDescendantsTree(a1);
+            categoriesTree.should.be.eql({
+                id: a1.id,
+                name: "a1",
+                childCategories: [
+                    {
+                        id: a11.id,
+                        name: "a11",
+                        childCategories: [
+                            {
+                                id: a111.id,
+                                name: "a111",
+                                childCategories: []
+                            },
+                            {
+                                id: a112.id,
+                                name: "a112",
+                                childCategories: []
+                            }
+                        ]
+                    },
+                    {
+                        id: a12.id,
+                        name: "a12",
+                        childCategories: []
+                    }
+                ]
+            });
+        })));
+
+        it("findDescendantsTree should filter by depth if optionally provided", () => Promise.all(connections.map(async connection => {
+            const categoryRepository = connection.getTreeRepository(Category);
+
+            const a1 = new Category();
+            a1.name = "a1";
+
+            const a11 = new Category();
+            a11.name = "a11";
+
+            const a12 = new Category();
+            a12.name = "a12";
+
+            const a111 = new Category();
+            a111.name = "a111";
+
+            const a112 = new Category();
+            a112.name = "a112";
+
+            a1.childCategories = [a11, a12];
+            a11.childCategories = [a111, a112];
+            await categoryRepository.save(a1);
+
+            const categoriesTree = await categoryRepository.findDescendantsTree(a1);
+            categoriesTree.should.be.eql({
+                id: a1.id,
+                name: "a1",
+                childCategories: [
+                    {
+                        id: a11.id,
+                        name: "a11",
+                        childCategories: [
+                            {
+                                id: a111.id,
+                                name: "a111",
+                                childCategories: []
+                            },
+                            {
+                                id: a112.id,
+                                name: "a112",
+                                childCategories: []
+                            }
+                        ]
+                    },
+                    {
+                        id: a12.id,
+                        name: "a12",
+                        childCategories: []
+                    }
+                ]
+            });
+
+            const categoriesTreeWithEmptyOptions = await categoryRepository.findDescendantsTree(a1, {});
+            categoriesTreeWithEmptyOptions.should.be.eql({
+                id: a1.id,
+                name: "a1",
+                childCategories: [
+                    {
+                        id: a11.id,
+                        name: "a11",
+                        childCategories: [
+                            {
+                                id: a111.id,
+                                name: "a111",
+                                childCategories: []
+                            },
+                            {
+                                id: a112.id,
+                                name: "a112",
+                                childCategories: []
+                            }
+                        ]
+                    },
+                    {
+                        id: a12.id,
+                        name: "a12",
+                        childCategories: []
+                    }
+                ]
+            });
+
+            const categoriesTreeWithDepthZero = await categoryRepository.findDescendantsTree(a1, { depth: 0 });
+            categoriesTreeWithDepthZero.should.be.eql({
+                id: a1.id,
+                name: "a1",
+                childCategories: []
+            });
+
+            const categoriesTreeWithDepthOne = await categoryRepository.findDescendantsTree(a1, { depth: 1 });
+            categoriesTreeWithDepthOne.should.be.eql({
+                id: a1.id,
+                name: "a1",
+                childCategories: [
+                    {
+                        id: a11.id,
+                        name: "a11",
+                        childCategories: []
+                    },
+                    {
+                        id: a12.id,
+                        name: "a12",
+                        childCategories: []
+                    }
+                ]
+            });
+        })));
+    });
 });
