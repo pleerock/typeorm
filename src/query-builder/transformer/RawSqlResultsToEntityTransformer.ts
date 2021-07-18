@@ -140,8 +140,15 @@ export class RawSqlResultsToEntityTransformer {
 
             // if user does not selected the whole entity or he used partial selection and does not select this particular column
             // then we don't add this column and its value into the entity
-            if (!this.expressionMap.selects.find(select => select.selection === alias.name || select.selection === alias.name + "." + column.propertyPath))
+            if (!this.expressionMap.selects.find(select => {
+                return !!(
+                    select.selection === alias.name
+                    || select.selection === alias.name + "." + column.propertyPath
+                    || (select.aliasName && select.aliasName === alias.name + "_" + column.propertyPath)
+                );
+            })) {
                 return;
+            }
 
             column.setEntityValue(entity, this.driver.prepareHydratedValue(value, column));
             if (value !== null) // we don't mark it as has data because if we will have all nulls in our object - we don't need such object
