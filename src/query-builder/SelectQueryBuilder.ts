@@ -1977,7 +1977,6 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
                 .offset(this.expressionMap.skip)
                 .limit(this.expressionMap.take)
                 .orderBy(orderBys)
-                .cache(this.expressionMap.cache ? this.expressionMap.cache : this.expressionMap.cacheId, this.expressionMap.cacheDuration)
                 .setParameters(this.getParameters())
                 .setNativeParameters(this.expressionMap.nativeParameters)
                 .getRawMany();
