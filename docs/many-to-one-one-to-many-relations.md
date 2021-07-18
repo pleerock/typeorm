@@ -110,6 +110,10 @@ To load a user with photos inside you must specify the relation in `FindOptions`
 const userRepository = connection.getRepository(User);
 const users = await userRepository.find({ relations: ["photos"] });
 
+// Alternatively, you can also do this but first import getConnection from typeorm:
+import { getConnection } from "typeorm";
+let users = await getConnection().manager.find(User, { relations: ["photos"] });
+
 // or from inverse side
 
 const photoRepository = connection.getRepository(Photo);
