@@ -50,6 +50,11 @@ export interface PostgresConnectionOptions extends BaseConnectionOptions, Postgr
      * If uuid-ossp is selected, TypeORM will use the uuid_generate_v4() function from this extension.
      */
     readonly uuidExtension?: "pgcrypto" | "uuid-ossp";
+    
+    /**
+     * The Postgres function to use to generate UUID columns. Overrides uuidExtension if provided.
+     */
+    readonly uuidFunction?: string;
 
 
     /*
