@@ -789,6 +789,7 @@ createConnection(/*...*/)
     photo.name = "Me and Bears";
     photo.description = "I am near polar bears";
     photo.filename = "photo-with-bears.jpg";
+    photo.views = 1;
     photo.isPublished = true;
 
     // 创建 photo metadata

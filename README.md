@@ -878,6 +878,7 @@ createConnection(/*...*/).then(async connection => {
     photo.name = "Me and Bears";
     photo.description = "I am near polar bears";
     photo.filename = "photo-with-bears.jpg";
+    photo.views = 1;
     photo.isPublished = true;
 
     // create a photo metadata
