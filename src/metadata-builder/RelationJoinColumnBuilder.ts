@@ -135,11 +135,13 @@ export class RelationJoinColumnBuilder {
             });
             const joinColumnName = joinColumnMetadataArg ? joinColumnMetadataArg.name : this.connection.namingStrategy.joinColumnName(relation.propertyName, referencedColumn.propertyName);
 
-            let relationalColumn = relation.entityMetadata.ownColumns.find(column => column.databaseName === joinColumnName);
+            const relationalColumns = relation.embeddedMetadata ? relation.embeddedMetadata.columns : relation.entityMetadata.ownColumns;
+            let relationalColumn = relationalColumns.find(column => column.databaseNameWithoutPrefixes === joinColumnName);
             if (!relationalColumn) {
                 relationalColumn = new ColumnMetadata({
                     connection: this.connection,
                     entityMetadata: relation.entityMetadata,
+                    embeddedMetadata: relation.embeddedMetadata,
                     args: {
                         target: "",
                         mode: "virtual",

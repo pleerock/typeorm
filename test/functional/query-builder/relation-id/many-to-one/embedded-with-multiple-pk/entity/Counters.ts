@@ -21,7 +21,7 @@ export class Counters {
     @ManyToOne(type => Category)
     category: Category;
 
-    @Column(() => Subcounters)
+    @Column(() => Subcounters, {prefix: "sub"})
     subcounters: Subcounters;
 
     categoryId: number[];

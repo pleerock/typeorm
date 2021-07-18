@@ -23,7 +23,7 @@ export class Counters {
     @JoinTable({ name: "counter_categories" })
     categories: Category[];
 
-    @Column(() => Subcounters)
+    @Column(() => Subcounters, {prefix: "sub"})
     subcntrs: Subcounters;
 
     categoryIds: number[];

@@ -17,7 +17,7 @@ export class Counters {
     @OneToMany(type => Category, category => category.posts)
     categories: Category[];
 
-    @Column(() => Subcounters)
+    @Column(() => Subcounters, {prefix: "sub"})
     subcounters: Subcounters;
 
     categoryIds: number[];

@@ -15,7 +15,7 @@ export class Counters {
     @Column()
     favorites: number;
 
-    @Column(() => Subcounters)
+    @Column(() => Subcounters, {prefix: "sub"})
     subcounters: Subcounters;
 
 }
