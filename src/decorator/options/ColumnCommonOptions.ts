@@ -26,7 +26,7 @@ export interface ColumnCommonOptions {
      * Specifies if this column will use auto increment (sequence, generated identity, rowid).
      * Note that in some databases only one column in entity can be marked as generated, and it must be a primary column.
      */
-    generated?: boolean|"increment"|"uuid"|"rowid";
+    generated?: boolean|"increment"|"uuid"|"rowid"|"identity";
 
     /**
      * Specifies if column's value must be unique or not.

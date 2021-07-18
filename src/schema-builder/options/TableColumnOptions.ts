@@ -41,7 +41,7 @@ export interface TableColumnOptions {
     /**
      * Specifies generation strategy if this column will use auto increment.
      */
-    generationStrategy?: "uuid"|"increment"|"rowid";
+    generationStrategy?: "uuid"|"increment"|"rowid"|"identity";
 
     /**
      * Indicates if column is a primary key.
