@@ -73,6 +73,9 @@ services:
     container_name: "typeorm-oracle"
     ports:
       - "1521:1521"
+    networks:
+      - default
+      - typeorm
 
   # sap hana (works only on linux)
   # hanaexpress:
@@ -116,3 +119,6 @@ services:
   #     - "6379:6379"
 #volumes:
 #  volume-hana-xe:
+
+networks:
+  typeorm:

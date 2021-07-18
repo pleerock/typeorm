@@ -1,0 +1,16 @@
+[
+  {
+    "skip": false,
+    "name": "oracle",
+    "type": "oracle",
+    "host": "typeorm-oracle",
+    "username": "system",
+    "password": "oracle",
+    "port": 1521,
+    "sid": "XE",
+    "logging": false,
+    "extra": {
+      "connectString": "typeorm-oracle:1521/XE"
+    }
+  }
+]

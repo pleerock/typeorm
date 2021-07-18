@@ -170,10 +170,12 @@ export function getTypeOrmConfig(): TestingConnectionOptions[] {
     try {
 
         try {
-            return require(__dirname + "/../../../../ormconfig.json");
-
-        } catch (err) {
+            // first checks build/compiled
+            // useful for docker containers in order to provide a custom config
             return require(__dirname + "/../../ormconfig.json");
+        } catch (err) {
+            // fallbacks to the root config
+            return require(__dirname + "/../../../../ormconfig.json");
         }
 
     } catch (err) {

@@ -1,0 +1,15 @@
+version: "3"
+
+services:
+  oracle-test:
+    build:
+      context: docker/oracle
+    volumes:
+      - .:/typeorm
+      - /typeorm/build
+      - /typeorm/node_modules
+    networks:
+      - typeorm
+
+networks:
+  typeorm:
