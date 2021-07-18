@@ -120,7 +120,18 @@ export class User {
     
 }
 ```
+Or alernatively, if your join column is renamed then:
 
+```
+  @Column({ nullable: true, name: "profile_id"} )
+  profileId: number;
+  
+  @OneToOne(type => Profile)
+  @JoinColumn({  name: "profile_id", referencedColumnName: "profileId" })
+  profile: Profile;
+
+ ```
+ 
 That's all. Next time you load a user object it will contain a profile id:
 
 ```javascript
