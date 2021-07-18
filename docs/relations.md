@@ -83,6 +83,8 @@ const category2 = new Category();
 category2.name = "zoo";
 
 const question = new Question();
+question.title = 'gocpplua';
+question.text = 'gocpplua'
 question.categories = [category1, category2];
 await connection.manager.save(question);
 ```
