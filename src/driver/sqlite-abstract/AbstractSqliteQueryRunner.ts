@@ -1195,6 +1195,10 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
         const upQueries: Query[] = [];
         const downQueries: Query[] = [];
 
+        upQueries.push(new Query(`PRAGMA foreign_keys = OFF;`));
+        downQueries.push(new Query(`PRAGMA foreign_keys = OFF;`));
+
+
         // drop old table indices
         oldTable.indices.forEach(index => {
             upQueries.push(this.dropIndexSql(index));
@@ -1247,6 +1251,9 @@ export abstract class AbstractSqliteQueryRunner extends BaseQueryRunner implemen
             upQueries.push(this.createIndexSql(newTable, index));
             downQueries.push(this.dropIndexSql(index));
         });
+
+        upQueries.push(new Query(`PRAGMA foreign_keys = ON;`));
+        downQueries.push(new Query(`PRAGMA foreign_keys = ON;`));
 
         await this.executeQueries(upQueries, downQueries);
         this.replaceCachedTable(oldTable, newTable);
