@@ -22,6 +22,7 @@
 * [Streaming result data](#streaming-result-data)
 * [Using pagination](#using-pagination)
 * [Set locking](#set-locking)
+* [Use custom index](#use-custom-index)
 * [Max execution time](#max-execution-time)
 * [Partial selection](#partial-selection)
 * [Using subqueries](#using-subqueries)
@@ -914,6 +915,17 @@ const users = await getRepository(User)
 ```
 
 Optimistic locking works in conjunction with both `@Version` and `@UpdatedDate` decorators.
+
+## Use custom index
+
+We need provide a certain index for database server to use in some cases. Only MySQL driver is supporting at the moment:
+
+```typescript
+const users = await getRepository(User)
+    .createQueryBuilder("user")
+    .useIndex("my_index") // name of index
+    .getMany();
+```
 
 ## Max execution time
 

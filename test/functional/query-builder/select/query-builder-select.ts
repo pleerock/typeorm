@@ -447,4 +447,18 @@ describe("query builder > select", () => {
 
         expect(sql).contains("SELECT /*+ MAX_EXECUTION_TIME(1000) */");
     })));
+
+    it("Support using certain index", () => Promise.all(connections.map(async connection => {
+        // `USE INDEX` is only supported in MySQL
+        if (!(connection.driver instanceof MysqlDriver)) {
+            return;
+        }
+
+        const sql = connection
+            .createQueryBuilder(Post, "post")
+            .useIndex("my_index")
+            .getSql();
+
+        expect(sql).contains("FROM post USE INDEX (my_index)");
+    })));
 });
