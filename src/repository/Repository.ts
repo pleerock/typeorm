@@ -14,6 +14,7 @@ import {InsertResult} from "../query-builder/result/InsertResult";
 import {QueryDeepPartialEntity} from "../query-builder/QueryPartialEntity";
 import {ObjectID} from "../driver/mongodb/typings";
 import {FindConditions} from "../find-options/FindConditions";
+import {CountOptions} from "../count-options/CountOptions";
 
 /**
  * Repository is supposed to work with your entity objects. Find entities, insert, update, delete, etc.
@@ -274,6 +275,11 @@ export class Repository<Entity extends ObjectLiteral> {
     /**
      * Counts entities that match given options.
      */
+    count(options?: CountOptions<Entity>): Promise<number>;
+
+    /**
+     * Counts entities that match given options.
+     */
     count(options?: FindManyOptions<Entity>): Promise<number>;
 
     /**
@@ -284,7 +290,7 @@ export class Repository<Entity extends ObjectLiteral> {
     /**
      * Counts entities that match given find options or conditions.
      */
-    count(optionsOrConditions?: FindManyOptions<Entity>|FindConditions<Entity>): Promise<number> {
+    count(optionsOrConditions?: CountOptions<Entity>|FindManyOptions<Entity>|FindConditions<Entity>): Promise<number> {
         return this.manager.count(this.metadata.target as any, optionsOrConditions as any);
     }
 

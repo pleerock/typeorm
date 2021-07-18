@@ -38,6 +38,8 @@ import {EntitySchema} from "../entity-schema/EntitySchema";
 import {ObjectLiteral} from "../common/ObjectLiteral";
 import {getMetadataArgsStorage} from "../globals";
 import { TypeORMError } from "../error";
+import {CountOptions} from "../count-options/CountOptions";
+import {CountOptionsUtils} from "../count-options/CountOptionsUtils";
 
 /**
  * Entity manager supposed to work with any entity, automatically find its repository and call its methods,
@@ -634,6 +636,12 @@ export class EntityManager {
      * Counts entities that match given options.
      * Useful for pagination.
      */
+    count<Entity>(entityClass: EntityTarget<Entity>, options?: CountOptions<Entity>): Promise<number>;
+
+    /**
+     * Counts entities that match given options.
+     * Useful for pagination.
+     */
     count<Entity>(entityClass: EntityTarget<Entity>, options?: FindOneOptions<Entity>): Promise<number>;
 
     /**
@@ -652,9 +660,10 @@ export class EntityManager {
      * Counts entities that match given find options or conditions.
      * Useful for pagination.
      */
-    async count<Entity>(entityClass: EntityTarget<Entity>, optionsOrConditions?: FindConditions<Entity>|FindOneOptions<Entity>|FindManyOptions<Entity>): Promise<number> {
+    async count<Entity>(entityClass: EntityTarget<Entity>, optionsOrConditions?: CountOptions<Entity>|FindConditions<Entity>|FindOneOptions<Entity>|FindManyOptions<Entity>): Promise<number> {
         const metadata = this.connection.getMetadata(entityClass);
-        const qb = this.createQueryBuilder(entityClass, FindOptionsUtils.extractFindManyOptionsAlias(optionsOrConditions) || metadata.name);
+        let qb = this.createQueryBuilder(entityClass, FindOptionsUtils.extractFindManyOptionsAlias(optionsOrConditions) || metadata.name);
+        qb = CountOptionsUtils.applyCountOptionsToQueryBuilder(qb, optionsOrConditions);
         return FindOptionsUtils.applyFindManyOptionsOrConditionsToQueryBuilder(qb, optionsOrConditions).getCount();
     }
 
