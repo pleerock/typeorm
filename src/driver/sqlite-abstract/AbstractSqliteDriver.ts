@@ -363,6 +363,10 @@ export abstract class AbstractSqliteDriver implements Driver {
                 return nativeParameters[key] === true ? 1 : 0;
             }
 
+            if (nativeParameters[key] instanceof Date) {
+                return DateUtils.mixedDateToUtcDatetimeString(nativeParameters[key]);
+            }
+
             return nativeParameters[key];
         });
 
@@ -387,6 +391,11 @@ export abstract class AbstractSqliteDriver implements Driver {
             if (value instanceof Function) {
                 return value();
 
+            }
+
+            if (value instanceof Date) {
+                escapedParameters.push(DateUtils.mixedDateToUtcDatetimeString(value));
+                return this.createParameter(key, escapedParameters.length - 1);
             }
 
             escapedParameters.push(value);
