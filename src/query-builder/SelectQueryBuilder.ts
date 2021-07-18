@@ -1600,6 +1600,14 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
 
         return "";
     }
+    /**
+     * Validates if the provided limit or offset is correct
+     * @param value - indicates the value provided for limit or offset
+     */
+    protected validateLimitAndOffset(value: number | undefined): boolean {
+        if (value === null || value === undefined || value < 0) return false;
+        return true;
+    }
 
     /**
      * Creates "LIMIT" and "OFFSET" parts of SQL query.
@@ -1609,11 +1617,10 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
         // we can use regular limit / offset, that's why we add offset and limit construction here based on skip and take values
         let offset: number|undefined = this.expressionMap.offset,
             limit: number|undefined = this.expressionMap.limit;
-        if (!offset && !limit && this.expressionMap.joinAttributes.length === 0) {
+        if (offset === undefined && limit === undefined && this.expressionMap.joinAttributes.length === 0) {
             offset = this.expressionMap.skip;
             limit = this.expressionMap.take;
         }
-
         if (this.connection.driver instanceof SqlServerDriver) {
             // Due to a limitation in SQL Server's parser implementation it does not support using
             // OFFSET or FETCH NEXT without an ORDER BY clause being provided. In cases where the
@@ -1621,50 +1628,50 @@ export class SelectQueryBuilder<Entity> extends QueryBuilder<Entity> implements 
             // have no effect on the query planner or on the order of the results returned.
             // https://dba.stackexchange.com/a/193799
             let prefix = "";
-            if ((limit || offset) && Object.keys(this.expressionMap.allOrderBys).length <= 0) {
+            if ((this.validateLimitAndOffset(limit) || this.validateLimitAndOffset(offset)) && Object.keys(this.expressionMap.allOrderBys).length <= 0) {
                 prefix = " ORDER BY (SELECT NULL)";
             }
 
-            if (limit && offset)
+            if (this.validateLimitAndOffset(limit) && this.validateLimitAndOffset(offset))
                 return prefix + " OFFSET " + offset + " ROWS FETCH NEXT " + limit + " ROWS ONLY";
-            if (limit)
+            if (this.validateLimitAndOffset(limit))
                 return prefix + " OFFSET 0 ROWS FETCH NEXT " + limit + " ROWS ONLY";
-            if (offset)
+            if (this.validateLimitAndOffset(offset))
                 return prefix + " OFFSET " + offset + " ROWS";
 
         } else if (this.connection.driver instanceof MysqlDriver || this.connection.driver instanceof AuroraDataApiDriver || this.connection.driver instanceof SapDriver) {
 
-            if (limit && offset)
+            if (this.validateLimitAndOffset(limit) && this.validateLimitAndOffset(offset))
                 return " LIMIT " + limit + " OFFSET " + offset;
-            if (limit)
+            if (this.validateLimitAndOffset(limit))
                 return " LIMIT " + limit;
-            if (offset)
+            if (this.validateLimitAndOffset(offset))
                 throw new OffsetWithoutLimitNotSupportedError();
 
         } else if (this.connection.driver instanceof AbstractSqliteDriver) {
 
-            if (limit && offset)
+            if (this.validateLimitAndOffset(limit) && this.validateLimitAndOffset(offset))
                 return " LIMIT " + limit + " OFFSET " + offset;
-            if (limit)
+            if (this.validateLimitAndOffset(limit))
                 return " LIMIT " + limit;
-            if (offset)
+            if (this.validateLimitAndOffset(offset))
                 return " LIMIT -1 OFFSET " + offset;
 
         } else if (this.connection.driver instanceof OracleDriver) {
 
-            if (limit && offset)
+            if (this.validateLimitAndOffset(limit) && this.validateLimitAndOffset(offset))
                 return " OFFSET " + offset + " ROWS FETCH NEXT " + limit + " ROWS ONLY";
-            if (limit)
+            if (this.validateLimitAndOffset(limit))
                 return " FETCH NEXT " + limit + " ROWS ONLY";
-            if (offset)
+            if (this.validateLimitAndOffset(offset))
                 return " OFFSET " + offset + " ROWS";
 
         } else {
-            if (limit && offset)
+            if (this.validateLimitAndOffset(limit) && this.validateLimitAndOffset(offset))
                 return " LIMIT " + limit + " OFFSET " + offset;
-            if (limit)
+            if (this.validateLimitAndOffset(limit))
                 return " LIMIT " + limit;
-            if (offset)
+            if (this.validateLimitAndOffset(offset))
                 return " OFFSET " + offset;
         }
 
