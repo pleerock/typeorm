@@ -8,13 +8,13 @@
 ## MongoDB support
 
 TypeORM has basic MongoDB support.
-Most of TypeORM functionality is RDBMS-specific, 
+Most of TypeORM functionality is RDBMS-specific,
 this page contains all MongoDB-specific functionality documentation.
 
 ## Defining entities and columns
 
-Defining entities and columns is almost the same as in relational databases, 
-the main difference is that you must use `@ObjectIdColumn` 
+Defining entities and columns is almost the same as in relational databases,
+the main difference is that you must use `@ObjectIdColumn`
 instead of `@PrimaryColumn` or `@PrimaryGeneratedColumn`.
 
 Simple entity example:
@@ -24,16 +24,16 @@ import {Entity, ObjectID, ObjectIdColumn, Column} from "typeorm";
 
 @Entity()
 export class User {
-    
+
     @ObjectIdColumn()
     id: ObjectID;
-    
+
     @Column()
     firstName: string;
-    
+
     @Column()
     lastName: string;
-    
+
 }
 ```
 
@@ -59,16 +59,16 @@ you can do the same in TypeORM:
 import {Entity, ObjectID, ObjectIdColumn, Column} from "typeorm";
 
 export class Profile {
-    
+
     @Column()
     about: string;
-    
+
     @Column()
     education: string;
-    
+
     @Column()
     career: string;
-    
+
 }
 ```
 
@@ -76,22 +76,22 @@ export class Profile {
 import {Entity, ObjectID, ObjectIdColumn, Column} from "typeorm";
 
 export class Photo {
-    
+
     @Column()
     url: string;
-    
+
     @Column()
     description: string;
-    
+
     @Column()
     size: number;
-    
+
     constructor(url: string, description: string, size: number) {
         this.url = url;
         this.description = description;
         this.size = size;
     }
-    
+
 }
 ```
 
@@ -100,22 +100,22 @@ import {Entity, ObjectID, ObjectIdColumn, Column} from "typeorm";
 
 @Entity()
 export class User {
-    
+
     @ObjectIdColumn()
     id: ObjectID;
-    
+
     @Column()
     firstName: string;
-    
+
     @Column()
     lastName: string;
-    
+
     @Column(type => Profile)
     profile: Profile;
-    
+
     @Column(type => Photo)
     photos: Photo[];
-    
+
 }
 ```
 
@@ -360,18 +360,6 @@ Find a document and replace it in one atomic operation, requires a write lock fo
 
 Find a document and update it in one atomic operation, requires a write lock for the duration of the operation.
 
-#### `geoHaystackSearch`
-
-Execute a geo search using a geo haystack index on a collection.
-
-#### `geoNear`
-
-Execute the geoNear command to search for items in the collection.
-
-#### `group`
-
-Run a group command across a collection.
-
 #### `collectionIndexes`
 
 Retrieve all the indexes on the collection.
@@ -411,14 +399,6 @@ Get the list of all indexes information for the collection.
 #### `mapReduce`
 
 Run Map Reduce across a collection. Be aware that the inline option for out will return an array of results not a collection.
-
-#### `parallelCollectionScan`
-
-Return N number of parallel cursors for a collection allowing parallel reading of entire collection. There are no ordering guarantees for returned results
-
-#### `reIndex`
-
-Reindex all indexes on the collection Warning: reIndex is a blocking operation (indexes are rebuilt in the foreground) and will be slow for large collections.
 
 #### `rename`
 

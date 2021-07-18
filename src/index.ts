@@ -104,7 +104,6 @@ export * from "./schema-builder/table/TableForeignKey";
 export * from "./schema-builder/table/TableIndex";
 export * from "./schema-builder/table/TableUnique";
 export * from "./schema-builder/table/Table";
-export * from "./driver/mongodb/typings";
 export * from "./driver/types/DatabaseType";
 export * from "./driver/types/ReplicationMode";
 export * from "./driver/sqlserver/MssqlParameter";

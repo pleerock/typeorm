@@ -1,9 +1,10 @@
-import {Entity, ObjectIdColumn, ObjectID, Column} from "../../../../src";
+import { ObjectId } from "mongodb";
+import {Entity, ObjectIdColumn, Column} from "../../../../src";
 
 @Entity()
 export class Item {
   @ObjectIdColumn()
-  public _id: ObjectID;
+  public _id: ObjectId;
 
   /**
    * @deprecated use contacts instead

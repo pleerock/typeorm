@@ -249,18 +249,6 @@ distinct 命令返回集合中给定键的不同值列表。
 
 查找文档并在一个 atomic 操作中更新它，在操作期间需要写入锁定。
 
-#### `geoHaystackSearch`
-
-使用集合上的 geo haystack 索引执行 geo 搜索。
-
-#### `geoNear`
-
-执行 geoNear 命令以搜索集合中的项目。
-
-#### `group`
-
-跨集合运行组命令。
-
 #### `collectionIndexes`
 
 检索集合上的所有索引。
@@ -300,14 +288,6 @@ distinct 命令返回集合中给定键的不同值列表。
 #### `mapReduce`
 
 在集合中运行 Map Reduce。 请注意，out 的内联选项将返回结果数组而不是集合。
-
-#### `parallelCollectionScan`
-
-为集合返回 N 个并行游标，允许并行读取整个集合。 返回的结果没有顺序保证。
-
-#### `reIndex`
-
-重新索引集合上的所有索引警告：reIndex 是一个阻塞操作（索引在前台重建），对于大型集合来说速度很慢。
 
 #### `rename`
 

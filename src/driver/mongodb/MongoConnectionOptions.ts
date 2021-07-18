@@ -1,5 +1,5 @@
+import { ReadPreference } from "mongodb";
 import {BaseConnectionOptions} from "../../connection/BaseConnectionOptions";
-import {ReadPreference} from "./typings";
 
 /**
  * MongoDB specific connection options.
@@ -21,7 +21,7 @@ export interface MongoConnectionOptions extends BaseConnectionOptions {
      * Database host.
      */
     readonly host?: string;
-    
+
     /**
      * Database host replica set.
      */
@@ -332,7 +332,7 @@ export interface MongoConnectionOptions extends BaseConnectionOptions {
      * https://github.com/mongodb/node-mongodb-native/releases/tag/v3.2.1
      */
     readonly useUnifiedTopology?: boolean;
-    
+
     /**
      * Automatic Client-Side Field Level Encryption configuration.
      */

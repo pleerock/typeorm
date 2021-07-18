@@ -1,3 +1,4 @@
+import { Document } from "bson";
 import {QueryRunner} from "../../query-runner/QueryRunner";
 import {ObjectLiteral} from "../../common/ObjectLiteral";
 import {TableColumn} from "../../schema-builder/table/TableColumn";
@@ -6,38 +7,41 @@ import {TableForeignKey} from "../../schema-builder/table/TableForeignKey";
 import {TableIndex} from "../../schema-builder/table/TableIndex";
 import {View} from "../../schema-builder/view/View";
 import {
+    AggregateOptions,
     AggregationCursor,
-    BulkWriteOpResultObject,
+    AnyBulkWriteOperation,
+    BulkWriteOptions,
+    BulkWriteResult,
     ChangeStream,
     ChangeStreamOptions,
-    Code,
     Collection,
-    CollectionAggregationOptions,
-    CollectionBulkWriteOptions,
-    CollectionInsertManyOptions,
-    CollectionInsertOneOptions,
     CollectionOptions,
-    CollStats,
-    CommandCursor,
-    Cursor,
-    DeleteWriteOpResultObject,
-    FindAndModifyWriteOpResultObject,
-    FindOneAndReplaceOption,
-    GeoHaystackSearchOptions,
-    GeoNearOptions,
-    InsertOneWriteOpResult,
-    InsertWriteOpResult,
+    CollStats, CollStatsOptions,
+    CountDocumentsOptions,
+    CreateIndexesOptions,
+    DeleteOptions,
+    DeleteResult,
+    DistinctOptions,
+    DropIndexesOptions,
+    Filter,
+    FindCursor,
+    FindOneAndDeleteOptions,
+    FindOneAndUpdateOptions,
+    IndexDescription,
+    IndexInformationOptions,
+    IndexSpecification,
+    InsertManyResult, InsertOneOptions, InsertOneResult,
+    ListIndexesCursor,
+    ListIndexesOptions, MapFunction,
     MapReduceOptions,
+    ModifyResult,
     MongoClient,
-    MongoCountPreferences,
-    MongodbIndexOptions,
-    OrderedBulkOperation,
-    ParallelCollectionScanOptions,
-    ReadPreference,
-    ReplaceOneOptions,
+    OptionalId,
+    OrderedBulkOperation, ReduceFunction,
+    RenameOptions, ReplaceOptions,
     UnorderedBulkOperation,
-    UpdateWriteOpResult
-} from "./typings";
+    UpdateFilter, UpdateOptions, UpdateResult,
+} from "mongodb";
 import {Connection} from "../../connection/Connection";
 import {ReadStream} from "../../platform/PlatformTools";
 import {MongoEntityManager} from "../../entity-manager/MongoEntityManager";
@@ -123,72 +127,72 @@ export class MongoQueryRunner implements QueryRunner {
     /**
      * Creates a cursor for a query that can be used to iterate over results from MongoDB.
      */
-    cursor(collectionName: string, query?: ObjectLiteral): Cursor<any> {
-        return this.getCollection(collectionName).find(query || {});
+    cursor<TSchema extends Document = Document>(collectionName: string, query?: Filter<TSchema>): FindCursor<TSchema> {
+        return this.getCollection<TSchema>(collectionName).find(query || {});
     }
 
     /**
      * Execute an aggregation framework pipeline against the collection.
      */
-    aggregate(collectionName: string, pipeline: ObjectLiteral[], options?: CollectionAggregationOptions): AggregationCursor<any> {
-        return this.getCollection(collectionName).aggregate(pipeline, options);
+    aggregate<TSchema extends Document = Document>(collectionName: string, pipeline: ObjectLiteral[], options?: AggregateOptions): AggregationCursor<TSchema> {
+        return this.getCollection<TSchema>(collectionName).aggregate(pipeline, options);
     }
 
     /**
      * Perform a bulkWrite operation without a fluent API.
      */
-    async bulkWrite(collectionName: string, operations: ObjectLiteral[], options?: CollectionBulkWriteOptions): Promise<BulkWriteOpResultObject> {
-        return await this.getCollection(collectionName).bulkWrite(operations, options);
+    async bulkWrite(collectionName: string, operations: AnyBulkWriteOperation[], options?: BulkWriteOptions): Promise<BulkWriteResult> {
+        return await this.getCollection(collectionName).bulkWrite(operations, options ?? {});
     }
 
     /**
      * Count number of matching documents in the db to a query.
      */
-    async count(collectionName: string, query?: ObjectLiteral, options?: MongoCountPreferences): Promise<any> {
-        return await this.getCollection(collectionName).countDocuments(query || {}, options);
+    async count<TSchema extends Document = Document>(collectionName: string, query?: Filter<TSchema>, options?: CountDocumentsOptions): Promise<any> {
+        return await this.getCollection<TSchema>(collectionName).countDocuments(query || {}, options ?? {});
     }
 
     /**
      * Creates an index on the db and collection.
      */
-    async createCollectionIndex(collectionName: string, fieldOrSpec: string | any, options?: MongodbIndexOptions): Promise<string> {
-        return await this.getCollection(collectionName).createIndex(fieldOrSpec, options);
+    async createCollectionIndex(collectionName: string, fieldOrSpec: IndexSpecification, options?: CreateIndexesOptions): Promise<string> {
+        return await this.getCollection(collectionName).createIndex(fieldOrSpec, options ?? {});
     }
 
     /**
      * Creates multiple indexes in the collection, this method is only supported for MongoDB 2.6 or higher.
      * Earlier version of MongoDB will throw a command not supported error. Index specifications are defined at http://docs.mongodb.org/manual/reference/command/createIndexes/.
      */
-    async createCollectionIndexes(collectionName: string, indexSpecs: ObjectLiteral[]): Promise<void> {
-        return await this.getCollection(collectionName).createIndexes(indexSpecs);
+    async createCollectionIndexes(collectionName: string, indexSpecs: IndexDescription[]): Promise<void> {
+        await this.getCollection(collectionName).createIndexes(indexSpecs);
     }
 
     /**
      * Delete multiple documents on MongoDB.
      */
-    async deleteMany(collectionName: string, query: ObjectLiteral, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
-        return await this.getCollection(collectionName).deleteMany(query, options);
+    async deleteMany<TSchema extends Document = Document>(collectionName: string, query: Filter<TSchema>, options?: DeleteOptions): Promise<DeleteResult> {
+        return await this.getCollection<TSchema>(collectionName).deleteMany(query, options ?? {});
     }
 
     /**
      * Delete a document on MongoDB.
      */
-    async deleteOne(collectionName: string, query: ObjectLiteral, options?: CollectionOptions): Promise<DeleteWriteOpResultObject> {
-        return await this.getCollection(collectionName).deleteOne(query, options);
+    async deleteOne<TSchema extends Document = Document>(collectionName: string, query: Filter<TSchema>, options?: DeleteOptions): Promise<DeleteResult> {
+        return await this.getCollection<TSchema>(collectionName).deleteOne(query, options ?? {});
     }
 
     /**
      * The distinct command returns returns a list of distinct values for the given key across a collection.
      */
-    async distinct(collectionName: string, key: string, query: ObjectLiteral, options?: { readPreference?: ReadPreference | string }): Promise<any> {
-        return await this.getCollection(collectionName).distinct(key, query, options);
+    async distinct<TSchema extends Document = Document>(collectionName: string, key: string, query: Filter<TSchema>, options?: DistinctOptions): Promise<any> {
+        return await this.getCollection<TSchema>(collectionName).distinct(key, query, options ?? {});
     }
 
     /**
      * Drops an index from this collection.
      */
-    async dropCollectionIndex(collectionName: string, indexName: string, options?: CollectionOptions): Promise<any> {
-        return await this.getCollection(collectionName).dropIndex(indexName, options);
+    async dropCollectionIndex(collectionName: string, indexName: string, options?: DropIndexesOptions): Promise<any> {
+        return await this.getCollection(collectionName).dropIndex(indexName, options ?? {});
     }
 
     /**
@@ -201,43 +205,22 @@ export class MongoQueryRunner implements QueryRunner {
     /**
      * Find a document and delete it in one atomic operation, requires a write lock for the duration of the operation.
      */
-    async findOneAndDelete(collectionName: string, query: ObjectLiteral, options?: { projection?: Object, sort?: Object, maxTimeMS?: number }): Promise<FindAndModifyWriteOpResultObject> {
-        return await this.getCollection(collectionName).findOneAndDelete(query, options);
+    async findOneAndDelete<TSchema extends Document = Document>(collectionName: string, query: Filter<TSchema>, options?: FindOneAndDeleteOptions): Promise<ModifyResult<TSchema>> {
+        return await this.getCollection<TSchema>(collectionName).findOneAndDelete(query, options ?? {});
     }
 
     /**
      * Find a document and replace it in one atomic operation, requires a write lock for the duration of the operation.
      */
-    async findOneAndReplace(collectionName: string, query: ObjectLiteral, replacement: Object, options?: FindOneAndReplaceOption): Promise<FindAndModifyWriteOpResultObject> {
-        return await this.getCollection(collectionName).findOneAndReplace(query, replacement, options);
+    async findOneAndReplace<TSchema extends Document = Document>(collectionName: string, query: Filter<TSchema>, replacement: Document, options?: FindOneAndDeleteOptions): Promise<ModifyResult<TSchema>> {
+        return await this.getCollection<TSchema>(collectionName).findOneAndReplace(query, replacement, options ?? {});
     }
 
     /**
      * Find a document and update it in one atomic operation, requires a write lock for the duration of the operation.
      */
-    async findOneAndUpdate(collectionName: string, query: ObjectLiteral, update: Object, options?: FindOneAndReplaceOption): Promise<FindAndModifyWriteOpResultObject> {
-        return await this.getCollection(collectionName).findOneAndUpdate(query, update, options);
-    }
-
-    /**
-     * Execute a geo search using a geo haystack index on a collection.
-     */
-    async geoHaystackSearch(collectionName: string, x: number, y: number, options?: GeoHaystackSearchOptions): Promise<any> {
-        return await this.getCollection(collectionName).geoHaystackSearch(x, y, options);
-    }
-
-    /**
-     * Execute the geoNear command to search for items in the collection.
-     */
-    async geoNear(collectionName: string, x: number, y: number, options?: GeoNearOptions): Promise<any> {
-        return await this.getCollection(collectionName).geoNear(x, y, options);
-    }
-
-    /**
-     * Run a group command across a collection.
-     */
-    async group(collectionName: string, keys: Object | Array<any> | Function | Code, condition: Object, initial: Object, reduce: Function | Code, finalize: Function | Code, command: boolean, options?: { readPreference?: ReadPreference | string }): Promise<any> {
-        return await this.getCollection(collectionName).group(keys, condition, initial, reduce, finalize, command, options);
+    async findOneAndUpdate<TSchema extends Document = Document>(collectionName: string, query: Filter<TSchema>, update: UpdateFilter<TSchema>, options?: FindOneAndUpdateOptions): Promise<ModifyResult<TSchema>> {
+        return await this.getCollection<TSchema>(collectionName).findOneAndUpdate(query, update, options ?? {});
     }
 
     /**
@@ -257,8 +240,8 @@ export class MongoQueryRunner implements QueryRunner {
     /**
      * Retrieves this collections index info.
      */
-    async collectionIndexInformation(collectionName: string, options?: { full: boolean }): Promise<any> {
-        return await this.getCollection(collectionName).indexInformation(options);
+    async collectionIndexInformation(collectionName: string, options?: IndexInformationOptions): Promise<Document> {
+        return await this.getCollection(collectionName).indexInformation(options ?? {});
     }
 
     /**
@@ -278,15 +261,15 @@ export class MongoQueryRunner implements QueryRunner {
     /**
      * Inserts an array of documents into MongoDB.
      */
-    async insertMany(collectionName: string, docs: ObjectLiteral[], options?: CollectionInsertManyOptions): Promise<InsertWriteOpResult> {
-        return await this.getCollection(collectionName).insertMany(docs, options);
+    async insertMany<TSchema extends Document = Document>(collectionName: string, docs: OptionalId<TSchema>[], options?: BulkWriteOptions): Promise<InsertManyResult<TSchema>> {
+        return await this.getCollection<TSchema>(collectionName).insertMany(docs, options ?? {});
     }
 
     /**
      * Inserts a single document into MongoDB.
      */
-    async insertOne(collectionName: string, doc: ObjectLiteral, options?: CollectionInsertOneOptions): Promise<InsertOneWriteOpResult> {
-        return await this.getCollection(collectionName).insertOne(doc, options);
+    async insertOne<TSchema extends Document = Document>(collectionName: string, doc: OptionalId<TSchema>, options?: InsertOneOptions): Promise<InsertOneResult<TSchema>> {
+        return await this.getCollection<TSchema>(collectionName).insertOne(doc, options ?? {});
     }
 
     /**
@@ -299,51 +282,36 @@ export class MongoQueryRunner implements QueryRunner {
     /**
      * Get the list of all indexes information for the collection.
      */
-    listCollectionIndexes(collectionName: string, options?: { batchSize?: number, readPreference?: ReadPreference | string }): CommandCursor {
+    listCollectionIndexes(collectionName: string, options?: ListIndexesOptions): ListIndexesCursor {
         return this.getCollection(collectionName).listIndexes(options);
     }
 
     /**
      * Run Map Reduce across a collection. Be aware that the inline option for out will return an array of results not a collection.
      */
-    async mapReduce(collectionName: string, map: Function | string, reduce: Function | string, options?: MapReduceOptions): Promise<any> {
-        return await this.getCollection(collectionName).mapReduce(map, reduce, options);
-    }
-
-    /**
-     * Return N number of parallel cursors for a collection allowing parallel reading of entire collection.
-     * There are no ordering guarantees for returned results.
-     */
-    async parallelCollectionScan(collectionName: string, options?: ParallelCollectionScanOptions): Promise<Cursor<any>[]> {
-        return await this.getCollection(collectionName).parallelCollectionScan(options);
+    async mapReduce<TSchema extends Document = Document, TKey = any, TValue = any>(collectionName: string, map: string | MapFunction<TSchema>, reduce: string | ReduceFunction<TKey, TValue>, options?: MapReduceOptions<TKey, TValue>): Promise<any> {
+        return await this.getCollection<TSchema>(collectionName).mapReduce(map, reduce, options ?? {});
     }
 
     /**
      * Reindex all indexes on the collection Warning: reIndex is a blocking operation (indexes are rebuilt in the foreground) and will be slow for large collections.
      */
-    async reIndex(collectionName: string): Promise<any> {
-        return await this.getCollection(collectionName).reIndex();
-    }
-
-    /**
-     * Reindex all indexes on the collection Warning: reIndex is a blocking operation (indexes are rebuilt in the foreground) and will be slow for large collections.
-     */
-    async rename(collectionName: string, newName: string, options?: { dropTarget?: boolean }): Promise<Collection<any>> {
-        return await this.getCollection(collectionName).rename(newName, options);
+    async rename(collectionName: string, newName: string, options?: RenameOptions): Promise<Collection | void> {
+        return this.getCollection(collectionName).rename(newName, options ?? {});
     }
 
     /**
      * Replace a document on MongoDB.
      */
-    async replaceOne(collectionName: string, query: ObjectLiteral, doc: ObjectLiteral, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
-        return await this.getCollection(collectionName).replaceOne(query, doc, options);
+    async replaceOne<TSchema extends Document = Document>(collectionName: string, query: Filter<TSchema>, replacement: TSchema, options?: ReplaceOptions): Promise<UpdateResult | Document> {
+        return await this.getCollection<TSchema>(collectionName).replaceOne(query, replacement, options ?? {});
     }
 
     /**
      * Get all the collection statistics.
      */
-    async stats(collectionName: string, options?: { scale: number }): Promise<CollStats> {
-        return await this.getCollection(collectionName).stats(options);
+    async stats(collectionName: string, options?: CollStatsOptions): Promise<CollStats> {
+        return await this.getCollection(collectionName).stats(options ?? {});
     }
 
     /**
@@ -356,15 +324,15 @@ export class MongoQueryRunner implements QueryRunner {
     /**
      * Update multiple documents on MongoDB.
      */
-    async updateMany(collectionName: string, query: ObjectLiteral, update: ObjectLiteral, options?: { upsert?: boolean, w?: any, wtimeout?: number, j?: boolean }): Promise<UpdateWriteOpResult> {
-        return await this.getCollection(collectionName).updateMany(query, update, options);
+    async updateMany(collectionName: string, query: ObjectLiteral, update: ObjectLiteral, options?: UpdateOptions): Promise<UpdateResult | Document> {
+        return await this.getCollection(collectionName).updateMany(query, update, options ?? {});
     }
 
     /**
      * Update a single document on MongoDB.
      */
-    async updateOne(collectionName: string, query: ObjectLiteral, update: ObjectLiteral, options?: ReplaceOneOptions): Promise<UpdateWriteOpResult> {
-        return await this.getCollection(collectionName).updateOne(query, update, options);
+    async updateOne(collectionName: string, query: ObjectLiteral, update: ObjectLiteral, options?: UpdateOptions): Promise<UpdateResult | Document> {
+        return await this.getCollection(collectionName).updateOne(query, update, options ?? {});
     }
 
     // -------------------------------------------------------------------------
@@ -885,8 +853,8 @@ export class MongoQueryRunner implements QueryRunner {
     /**
      * Gets collection from the database with a given name.
      */
-    protected getCollection(collectionName: string): Collection<any> {
-        return this.databaseConnection.db(this.connection.driver.database!).collection(collectionName);
+    protected getCollection<TSchema extends Document = Document>(collectionName: string): Collection<TSchema> {
+        return this.databaseConnection.db(this.connection.driver.database!).collection<TSchema>(collectionName);
     }
 
 }

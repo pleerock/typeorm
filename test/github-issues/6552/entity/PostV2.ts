@@ -1,4 +1,5 @@
-import { ObjectID, ObjectIdColumn } from "../../../../src";
+import { ObjectId } from "mongodb";
+import { ObjectIdColumn } from "../../../../src";
 import { Column } from "../../../../src/decorator/columns/Column";
 import { Entity } from "../../../../src/decorator/entity/Entity";
 
@@ -6,7 +7,7 @@ import { Entity } from "../../../../src/decorator/entity/Entity";
 export class PostV2 {
 
     @ObjectIdColumn()
-    postId: ObjectID;
+    postId: ObjectId;
 
     @Column()
     title: string;

@@ -1,4 +1,5 @@
-import {Column, Entity, ObjectID, ObjectIdColumn} from "../../../../src";
+import { ObjectId } from "mongodb";
+import {Column, Entity, ObjectIdColumn} from "../../../../src";
 
 @Entity()
 export class Product {
@@ -11,7 +12,7 @@ export class Product {
     }
 
     @ObjectIdColumn()
-    id: ObjectID;
+    id: ObjectId;
 
     @Column()
     name: string;

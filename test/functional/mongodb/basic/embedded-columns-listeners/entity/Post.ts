@@ -2,14 +2,14 @@ import {Entity} from "../../../../../../src/decorator/entity/Entity";
 import {Column} from "../../../../../../src/decorator/columns/Column";
 import {ObjectIdColumn} from "../../../../../../src/decorator/columns/ObjectIdColumn";
 import {Counters} from "./Counters";
-import {ObjectID} from "../../../../../../src/driver/mongodb/typings";
 import { Tags } from "./Tags";
+import { ObjectId } from "mongodb";
 
 @Entity()
 export class Post {
 
     @ObjectIdColumn()
-    id: ObjectID;
+    id: ObjectId;
 
     @Column()
     title: string;

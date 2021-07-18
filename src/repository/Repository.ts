@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import {EntityMetadata} from "../metadata/EntityMetadata";
 import {FindManyOptions} from "../find-options/FindManyOptions";
 import {ObjectLiteral} from "../common/ObjectLiteral";
@@ -12,7 +13,6 @@ import {DeleteResult} from "../query-builder/result/DeleteResult";
 import {UpdateResult} from "../query-builder/result/UpdateResult";
 import {InsertResult} from "../query-builder/result/InsertResult";
 import {QueryDeepPartialEntity} from "../query-builder/QueryPartialEntity";
-import {ObjectID} from "../driver/mongodb/typings";
 import {FindConditions} from "../find-options/FindConditions";
 
 /**
@@ -237,7 +237,7 @@ export class Repository<Entity extends ObjectLiteral> {
      * Executes fast and efficient UPDATE query.
      * Does not check if entity exist in the database.
      */
-    update(criteria: string|string[]|number|number[]|Date|Date[]|ObjectID|ObjectID[]|FindConditions<Entity>, partialEntity: QueryDeepPartialEntity<Entity>): Promise<UpdateResult> {
+    update(criteria: string|string[]|number|number[]|Date|Date[]|ObjectId|ObjectId[]|FindConditions<Entity>, partialEntity: QueryDeepPartialEntity<Entity>): Promise<UpdateResult> {
         return this.manager.update(this.metadata.target as any, criteria as any, partialEntity);
     }
 
@@ -247,7 +247,7 @@ export class Repository<Entity extends ObjectLiteral> {
      * Executes fast and efficient DELETE query.
      * Does not check if entity exist in the database.
      */
-    delete(criteria: string|string[]|number|number[]|Date|Date[]|ObjectID|ObjectID[]|FindConditions<Entity>): Promise<DeleteResult> {
+    delete(criteria: string|string[]|number|number[]|Date|Date[]|ObjectId|ObjectId[]|FindConditions<Entity>): Promise<DeleteResult> {
         return this.manager.delete(this.metadata.target as any, criteria as any);
     }
 
@@ -257,7 +257,7 @@ export class Repository<Entity extends ObjectLiteral> {
      * Executes fast and efficient SOFT-DELETE query.
      * Does not check if entity exist in the database.
      */
-    softDelete(criteria: string|string[]|number|number[]|Date|Date[]|ObjectID|ObjectID[]|FindConditions<Entity>): Promise<UpdateResult> {
+    softDelete(criteria: string|string[]|number|number[]|Date|Date[]|ObjectId|ObjectId[]|FindConditions<Entity>): Promise<UpdateResult> {
         return this.manager.softDelete(this.metadata.target as any, criteria as any);
     }
 
@@ -267,7 +267,7 @@ export class Repository<Entity extends ObjectLiteral> {
      * Executes fast and efficient SOFT-DELETE query.
      * Does not check if entity exist in the database.
      */
-    restore(criteria: string|string[]|number|number[]|Date|Date[]|ObjectID|ObjectID[]|FindConditions<Entity>): Promise<UpdateResult> {
+    restore(criteria: string|string[]|number|number[]|Date|Date[]|ObjectId|ObjectId[]|FindConditions<Entity>): Promise<UpdateResult> {
         return this.manager.restore(this.metadata.target as any, criteria as any);
     }
 
@@ -351,7 +351,7 @@ export class Repository<Entity extends ObjectLiteral> {
     /**
      * Finds first entity that matches given options.
      */
-    findOne(id?: string|number|Date|ObjectID, options?: FindOneOptions<Entity>): Promise<Entity|undefined>;
+    findOne(id?: string|number|Date|ObjectId, options?: FindOneOptions<Entity>): Promise<Entity|undefined>;
 
     /**
      * Finds first entity that matches given options.
@@ -366,14 +366,14 @@ export class Repository<Entity extends ObjectLiteral> {
     /**
      * Finds first entity that matches given conditions.
      */
-    findOne(optionsOrConditions?: string|number|Date|ObjectID|FindOneOptions<Entity>|FindConditions<Entity>, maybeOptions?: FindOneOptions<Entity>): Promise<Entity|undefined> {
+    findOne(optionsOrConditions?: string|number|Date|ObjectId|FindOneOptions<Entity>|FindConditions<Entity>, maybeOptions?: FindOneOptions<Entity>): Promise<Entity|undefined> {
         return this.manager.findOne(this.metadata.target as any, optionsOrConditions as any, maybeOptions);
     }
 
     /**
      * Finds first entity that matches given options.
      */
-    findOneOrFail(id?: string|number|Date|ObjectID, options?: FindOneOptions<Entity>): Promise<Entity>;
+    findOneOrFail(id?: string|number|Date|ObjectId, options?: FindOneOptions<Entity>): Promise<Entity>;
 
     /**
      * Finds first entity that matches given options.
@@ -388,7 +388,7 @@ export class Repository<Entity extends ObjectLiteral> {
     /**
      * Finds first entity that matches given conditions.
      */
-    findOneOrFail(optionsOrConditions?: string|number|Date|ObjectID|FindOneOptions<Entity>|FindConditions<Entity>, maybeOptions?: FindOneOptions<Entity>): Promise<Entity> {
+    findOneOrFail(optionsOrConditions?: string|number|Date|ObjectId|FindOneOptions<Entity>|FindConditions<Entity>, maybeOptions?: FindOneOptions<Entity>): Promise<Entity> {
         return this.manager.findOneOrFail(this.metadata.target as any, optionsOrConditions as any, maybeOptions);
     }
 

@@ -40,32 +40,32 @@ describe("mongodb > array columns", () => {
         expect(loadedPost!.numbers).to.be.not.empty;
         expect(loadedPost!.booleans).to.be.not.empty;
         expect(loadedPost!.counters).to.be.not.empty;
-        loadedPost!.other1.length.should.be.equal(0);
+        expect(loadedPost!.other1).to.have.length(0);
         expect(loadedPost!.other2).to.be.undefined;
 
-        loadedPost!.names[0].should.be.equal("umed");
-        loadedPost!.names[1].should.be.equal("dima");
-        loadedPost!.names[2].should.be.equal("bakhrom");
+        expect(loadedPost!.names[0]).to.eql("umed");
+        expect(loadedPost!.names[1]).to.eql("dima");
+        expect(loadedPost!.names[2]).to.eql("bakhrom");
 
-        loadedPost!.numbers[0].should.be.equal(1);
-        loadedPost!.numbers[1].should.be.equal(0);
-        loadedPost!.numbers[2].should.be.equal(1);
+        expect(loadedPost!.numbers[0]).to.eql(1);
+        expect(loadedPost!.numbers[1]).to.eql(0);
+        expect(loadedPost!.numbers[2]).to.eql(1);
 
-        loadedPost!.booleans[0].should.be.equal(true);
-        loadedPost!.booleans[1].should.be.equal(false);
-        loadedPost!.booleans[2].should.be.equal(false);
+        expect(loadedPost!.booleans[0]).to.eql(true);
+        expect(loadedPost!.booleans[1]).to.eql(false);
+        expect(loadedPost!.booleans[2]).to.eql(false);
 
-        loadedPost!.counters[0].should.be.instanceOf(Counters);
-        loadedPost!.counters[1].should.be.instanceOf(Counters);
-        loadedPost!.counters[2].should.be.instanceOf(Counters);
+        expect(loadedPost!.counters[0]).to.be.instanceOf(Counters);
+        expect(loadedPost!.counters[1]).to.be.instanceOf(Counters);
+        expect(loadedPost!.counters[2]).to.be.instanceOf(Counters);
 
-        loadedPost!.counters[0].likes.should.be.equal(1);
-        loadedPost!.counters[1].likes.should.be.equal(2);
-        loadedPost!.counters[2].likes.should.be.equal(3);
+        expect(loadedPost!.counters[0].likes).to.be.eql(1);
+        expect(loadedPost!.counters[1].likes).to.be.eql(2);
+        expect(loadedPost!.counters[2].likes).to.be.eql(3);
 
-        loadedPost!.counters[0].text.should.be.equal("number #1");
-        loadedPost!.counters[1].text.should.be.equal("number #2");
-        loadedPost!.counters[2].text.should.be.equal("number #3");
+        expect(loadedPost!.counters[0].text).to.be.eql("number #1");
+        expect(loadedPost!.counters[1].text).to.be.eql("number #2");
+        expect(loadedPost!.counters[2].text).to.be.eql("number #3");
 
         // now update the post
         post.names = ["umed!", "dima!", "bakhrom!"];
@@ -91,31 +91,31 @@ describe("mongodb > array columns", () => {
         expect(loadedUpdatedPost!.other1).to.be.not.empty;
         expect(loadedUpdatedPost!.other2).to.be.undefined;
 
-        loadedUpdatedPost!.names[0].should.be.equal("umed!");
-        loadedUpdatedPost!.names[1].should.be.equal("dima!");
-        loadedUpdatedPost!.names[2].should.be.equal("bakhrom!");
+        expect(loadedUpdatedPost!.names[0]).to.eql("umed!");
+        expect(loadedUpdatedPost!.names[1]).to.eql("dima!");
+        expect(loadedUpdatedPost!.names[2]).to.eql("bakhrom!");
 
-        loadedUpdatedPost!.numbers[0].should.be.equal(11);
-        loadedUpdatedPost!.numbers[1].should.be.equal(10);
-        loadedUpdatedPost!.numbers[2].should.be.equal(11);
+        expect(loadedUpdatedPost!.numbers[0]).to.eql(11);
+        expect(loadedUpdatedPost!.numbers[1]).to.eql(10);
+        expect(loadedUpdatedPost!.numbers[2]).to.eql(11);
 
-        loadedUpdatedPost!.booleans[0].should.be.equal(true);
-        loadedUpdatedPost!.booleans[1].should.be.equal(true);
-        loadedUpdatedPost!.booleans[2].should.be.equal(true);
+        expect(loadedUpdatedPost!.booleans[0]).to.eql(true);
+        expect(loadedUpdatedPost!.booleans[1]).to.eql(true);
+        expect(loadedUpdatedPost!.booleans[2]).to.eql(true);
 
-        loadedUpdatedPost!.counters[0].should.be.instanceOf(Counters);
-        loadedUpdatedPost!.counters[1].should.be.instanceOf(Counters);
+        expect(loadedUpdatedPost!.counters[0]).to.be.instanceOf(Counters);
+        expect(loadedUpdatedPost!.counters[1]).to.be.instanceOf(Counters);
 
-        loadedUpdatedPost!.counters[0].likes.should.be.equal(11);
-        loadedUpdatedPost!.counters[1].likes.should.be.equal(12);
 
-        loadedUpdatedPost!.counters[0].text.should.be.equal("number #11");
-        loadedUpdatedPost!.counters[1].text.should.be.equal("number #12");
+        expect(loadedUpdatedPost!.counters[0].likes).to.be.eql(11);
+        expect(loadedUpdatedPost!.counters[1].likes).to.be.eql(12);
 
-        loadedUpdatedPost!.other1[0].should.be.instanceOf(Counters);
-        loadedUpdatedPost!.other1[0].likes.should.be.equal(0);
-        loadedUpdatedPost!.other1[0].text.should.be.equal("other");
+        expect(loadedUpdatedPost!.counters[0].text).to.be.eql("number #11");
+        expect(loadedUpdatedPost!.counters[1].text).to.be.eql("number #12");
 
+        expect(loadedUpdatedPost!.other1[0]).to.be.instanceOf(Counters);
+        expect(loadedUpdatedPost!.other1[0].likes).to.eql(0);
+        expect(loadedUpdatedPost!.other1[0].text).to.eql("other");
     })));
 
     it("should retrieve arrays from the column metadata", () => Promise.all(connections.map(async connection => {

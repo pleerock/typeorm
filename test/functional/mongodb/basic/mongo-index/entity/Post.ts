@@ -1,8 +1,8 @@
+import { ObjectId } from "mongodb";
 import {Entity} from "../../../../../../src/decorator/entity/Entity";
 import {Column} from "../../../../../../src/decorator/columns/Column";
 import {ObjectIdColumn} from "../../../../../../src/decorator/columns/ObjectIdColumn";
 import {Index} from "../../../../../../src/decorator/Index";
-import {ObjectID} from "../../../../../../src/driver/mongodb/typings";
 
 @Entity()
 @Index(["title", "name"])
@@ -14,7 +14,7 @@ import {ObjectID} from "../../../../../../src/driver/mongodb/typings";
 export class Post {
 
     @ObjectIdColumn()
-    id: ObjectID;
+    id: ObjectId;
 
     @Column()
     @Index()
