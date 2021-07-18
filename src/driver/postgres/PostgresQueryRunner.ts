@@ -2100,7 +2100,10 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
      */
     protected createEnumTypeSql(table: Table, column: TableColumn, enumName?: string): Query {
         if (!enumName) enumName = this.buildEnumName(table, column);
-        const enumValues = column.enum!.map(value => `'${value.replace("'", "''")}'`).join(", ");
+        if (!column.enum) {
+            throw new Error(`No enum values provided for column ${column.name} of table ${table.name}. Please provide the enum values using @Column({enum: ...})`);
+        }
+        const enumValues = column.enum.map(value => `'${value.replace("'", "''")}'`).join(", ");
         return new Query(`CREATE TYPE ${enumName} AS ENUM(${enumValues})`);
     }
 

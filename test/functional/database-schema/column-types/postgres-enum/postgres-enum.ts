@@ -228,10 +228,10 @@ describe("database schema > column types > postgres-enum", () => {
         let table = await queryRunner.getTable("post");
         const column = table!.findColumnByName("enum")!;
         const newColumn = column.clone();
-        newColumn.enumName = "PostTypeEnum"
+        newColumn.enumName = "PostTypeEnum";
 
         // change column
-        await queryRunner.changeColumn(table!, column, newColumn)
+        await queryRunner.changeColumn(table!, column, newColumn);
 
         // check if `enumName` changed
         table = await queryRunner.getTable("post");
@@ -239,7 +239,7 @@ describe("database schema > column types > postgres-enum", () => {
         expect(changedColumn.enumName).to.equal("PostTypeEnum");
 
         // revert changes
-        await queryRunner.executeMemoryDownSql()
+        await queryRunner.executeMemoryDownSql();
 
         // check if `enumName` reverted
         table = await queryRunner.getTable("post");
@@ -275,10 +275,10 @@ describe("database schema > column types > postgres-enum", () => {
             ]
         });
 
-        await queryRunner.createTable(table)
+        await queryRunner.createTable(table);
 
         // revert changes
-        await queryRunner.executeMemoryDownSql()
+        await queryRunner.executeMemoryDownSql();
 
         await queryRunner.release();
     })));
@@ -295,16 +295,16 @@ describe("database schema > column types > postgres-enum", () => {
         await queryRunner.changeColumn(table!, enumColumn, changedColumn);
 
         table = await queryRunner.getTable("post");
-        const columnAfterChange = table!.findColumnByName("enum")!
+        const columnAfterChange = table!.findColumnByName("enum")!;
         columnAfterChange.enum!.should.be.eql(["C", "D", "E"]);
         columnAfterChange.enumName!.should.be.eql("my_enum_type");
 
         await queryRunner.executeMemoryDownSql();
 
         table = await queryRunner.getTable("post");
-        const columnAfterRevert = table!.findColumnByName("enum")!
+        const columnAfterRevert = table!.findColumnByName("enum")!;
         columnAfterRevert.enum!.should.be.eql(["A", "B", "C"]);
-        expect(columnAfterRevert.enumName).to.undefined
+        expect(columnAfterRevert.enumName).to.undefined;
 
         await queryRunner.release();
     })));
@@ -357,6 +357,16 @@ describe("database schema > column types > postgres-enum", () => {
             `WHERE "n"."nspname" = '${currentSchema}' AND "t"."typname" = 'post_enum_enum'`);
         result.length.should.be.equal(1);
 
+        await queryRunner.release();
+    })));
+
+    it("should throw an error if no enum values are provided", () => Promise.all(connections.map(async connection => {
+        const queryRunner = connection.createQueryRunner();
+        await queryRunner.addColumn("post", new TableColumn({
+            name: "newEnum",
+            type: "enum",
+            // enum missing intentionally
+        })).should.eventually.be.rejectedWith(Error).and.property("message").contain("newEnum");
         await queryRunner.release();
     })));
 
