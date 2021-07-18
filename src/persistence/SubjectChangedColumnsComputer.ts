@@ -74,18 +74,22 @@ export class SubjectChangedColumnsComputer {
                         return;
                 }
                 let normalizedValue = entityValue;
+
                 // normalize special values to make proper comparision
                 if (entityValue !== null) {
+                    if (column.transformer && shouldTransformDatabaseEntity) {
+                      normalizedValue = ApplyValueTransformers.transformTo(column.transformer, entityValue);
+                    }
                     switch (column.type) {
                         case "date":
-                            normalizedValue = DateUtils.mixedDateToDateString(entityValue);
+                            normalizedValue = DateUtils.mixedDateToDateString(normalizedValue);
                             break;
 
                         case "time":
                         case "time with time zone":
                         case "time without time zone":
                         case "timetz":
-                            normalizedValue = DateUtils.mixedDateToTimeString(entityValue);
+                            normalizedValue = DateUtils.mixedDateToTimeString(normalizedValue);
                             break;
 
                         case "datetime":
@@ -96,7 +100,7 @@ export class SubjectChangedColumnsComputer {
                         case "timestamp with time zone":
                         case "timestamp with local time zone":
                         case "timestamptz":
-                            normalizedValue = DateUtils.mixedDateToUtcDatetimeString(entityValue);
+                            normalizedValue = DateUtils.mixedDateToUtcDatetimeString(normalizedValue);
                             databaseValue = DateUtils.mixedDateToUtcDatetimeString(databaseValue);
                             break;
 
@@ -105,26 +109,23 @@ export class SubjectChangedColumnsComputer {
                             // JSON.stringify doesn't work because postgresql sorts jsonb before save.
                             // If you try to save json '[{"messages": "", "attribute Key": "", "level":""}] ' as jsonb,
                             // then postgresql will save it as '[{"level": "", "message":"", "attributeKey": ""}]'
-                            if (OrmUtils.deepCompare(entityValue, databaseValue)) return;
+                            if (OrmUtils.deepCompare(normalizedValue, databaseValue)) return;
                             break;
 
                         case "simple-array":
-                            normalizedValue = DateUtils.simpleArrayToString(entityValue);
+                            normalizedValue = DateUtils.simpleArrayToString(normalizedValue);
                             databaseValue = DateUtils.simpleArrayToString(databaseValue);
                             break;
                         case "simple-enum":
-                            normalizedValue = DateUtils.simpleEnumToString(entityValue);
+                            normalizedValue = DateUtils.simpleEnumToString(normalizedValue);
                             databaseValue = DateUtils.simpleEnumToString(databaseValue);
                             break;
                         case "simple-json":
-                            normalizedValue = DateUtils.simpleJsonToString(entityValue);
+                            normalizedValue = DateUtils.simpleJsonToString(normalizedValue);
                             databaseValue = DateUtils.simpleJsonToString(databaseValue);
                             break;
                     }
 
-                    if (column.transformer) {
-                        normalizedValue = ApplyValueTransformers.transformTo(column.transformer, entityValue);
-                    }
                 }
 
                 // if value is not changed - then do nothing
