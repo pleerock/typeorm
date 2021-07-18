@@ -55,6 +55,12 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
     protected releaseCallback?: (err: any) => void;
 
     // -------------------------------------------------------------------------
+    // Private Properties
+    // -------------------------------------------------------------------------
+
+    private enumNames: Set<string>;
+
+    // -------------------------------------------------------------------------
     // Constructor
     // -------------------------------------------------------------------------
 
@@ -64,6 +70,8 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
         this.connection = driver.connection;
         this.mode = mode;
         this.broadcaster = new Broadcaster(this);
+
+        this.enumNames = new Set();
     }
 
     // -------------------------------------------------------------------------
@@ -407,17 +415,21 @@ export class PostgresQueryRunner extends BaseQueryRunner implements QueryRunner 
 
         // if table have column with ENUM type, we must create this type in postgres.
         const enumColumns = table.columns.filter(column => column.type === "enum" || column.type === "simple-enum")
-        const createdEnumTypes: string[] = []
+        // const createdEnumTypes = new Set<string>();
+
         for (const column of enumColumns) {
             // TODO: Should also check if values of existing type matches expected ones
             const hasEnum = await this.hasEnumType(table, column);
             const enumName = this.buildEnumName(table, column)
 
             // if enum with the same "enumName" is defined more then once, me must prevent double creation
-            if (!hasEnum && createdEnumTypes.indexOf(enumName) === -1) {
-                createdEnumTypes.push(enumName)
-                upQueries.push(this.createEnumTypeSql(table, column, enumName));
-                downQueries.push(this.dropEnumTypeSql(table, column, enumName));
+            if (!hasEnum) {
+                if (!this.enumNames.has(enumName)) {
+                    upQueries.push(this.createEnumTypeSql(table, column, enumName));
+                    downQueries.push(this.dropEnumTypeSql(table, column, enumName));
+                }
+
+                this.enumNames.add(enumName);
             }
         }
 
